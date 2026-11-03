@@ -20,7 +20,7 @@ visible during the TCP handshake.
 I used two days of the MachineLearningCVE CSVs, which have one row per flow (78 CICFlowMeter
 features plus a label). Friday afternoon has a DDoS attack generated with LOIC, and this is the
 day I trained on. Wednesday has four different DoS attacks (Hulk, GoldenEye, slowloris and
-Slowhttptest), which I only used to test the Friday models on unseen attacks. The official
+Slowhttptest, plus 11 Heartbleed flows), which I only used to test the Friday models on unseen attacks. The official
 CIC server was not reachable, so I used a public GitHub LFS mirror and verified the files
 with SHA-256.
 

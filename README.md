@@ -202,8 +202,8 @@ table, one row per flow.
 - Friday afternoon has a DDoS attack (Distributed Denial of Service, where lots of machines
   flood one web server). The tool used was LOIC. This is the day I trained on.
 - Wednesday has four other DoS attacks, all against the same kind of web server: Hulk,
-  GoldenEye, slowloris and Slowhttptest. I only used this day as an unseen test, to find where
-  the detector breaks.
+  GoldenEye, slowloris and Slowhttptest (plus 11 Heartbleed flows, which also count as
+  attacks). I only used this day as an unseen test, to find where the detector breaks.
 
 **Where I downloaded them from.** The official CIC server wasn't reachable, so the script pulls
 the files from a public GitHub repo (`2000pawan/Cyber-Attack-Threat-Classification`) where
@@ -270,7 +270,7 @@ Script: `scripts/02_train.py`
    in both.
 
 After cleaning, Friday has 223,082 flows (128,014 DDoS, 95,068 benign) and Wednesday has
-610,492, of which 193,756 are attacks.
+610,492, of which 193,756 are attacks (including the 11 Heartbleed flows).
 
 The label is just yes/no: y = 1 if Label isn't "BENIGN", otherwise 0. So the model only has to
 say "attack or not", not which attack it is.
