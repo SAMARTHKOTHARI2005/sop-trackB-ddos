@@ -1,0 +1,5 @@
+# Raw dataset CSVs are large (77 MB + 225 MB); fetch them with scripts/00_download.sh
+data/*.csv
+__pycache__/
+.venv/
+.DS_Store
