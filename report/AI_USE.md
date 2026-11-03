@@ -47,8 +47,8 @@ helped me plan the approach: which two CIC-IDS2017 days to use, which fields cou
 - Made the decisions along the way: seed 46 is the only seed for every reported result, other
   seeds are only a robustness check, and the report must be exactly two pages.
 - Asked for the clean-up passes: removing unneeded code, clearer variable names, a single
-  `run_all.sh`, pinned library versions, and printing every result as a table so the logs are
-  easier to read and check.
+  `run_all.sh` to run everything, and printing every result as a table so the logs are easier
+  to read and check.
 - Made some small formatting edits to `02_train.py` myself.
 
 **Understanding and checking it**
