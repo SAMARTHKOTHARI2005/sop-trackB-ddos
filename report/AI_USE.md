@@ -26,6 +26,10 @@ helped me plan the approach: which two CIC-IDS2017 days to use, which fields cou
 
 **Planning and design**
 
+- Read up on the background myself: the CIC-IDS2017 dataset and how CICFlowMeter turns
+  packets into flows, the LOIC attack tool, and P4 / programmable switches (where the
+  match-action idea comes from).
+- Made an earlier attempt at the pipeline on my own before this final version.
 - Chose Track B and wrote the task brief that the code follows (planned with claude.ai, as above).
   It fixed the dataset mirror (including that the `media.githubusercontent.com` link has to be
   used instead of `raw.githubusercontent.com`), the two days, the four feature sets and what each

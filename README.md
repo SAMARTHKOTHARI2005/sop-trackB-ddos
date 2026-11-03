@@ -527,7 +527,8 @@ All the numbers in the reports are taken from the files in `outputs/`.
 ## 4. How this was built
 
 The task, the overall plan (dataset mirror, the two files, the four feature sets, the decision
-tree, the steps), the seed and the week-2 direction were from my own brief. I also set up the
+tree, the steps), the seed and the week-2 direction were from my own brief, after reading up on
+CIC-IDS2017, LOIC and P4 and an earlier attempt of my own. I also set up the
 repo, made the decisions along the way (seed 46 only, other seeds just as a robustness check),
 checked everything against the professor's requirements, asked for the clean-up and table
 formatting, and re-ran the pipeline myself.
