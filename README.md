@@ -1,6 +1,6 @@
 # SOP Trial Task, Track B: early-packet DDoS detection on CIC-IDS2017
 
-Trial task for Dr. K Hari Babu (BITS Pilani). Student ID 2023A7PS0646P.
+Trial task for Dr. K Hari Babu (BITS Pilani). Samarth Kothari, student ID 2023A7PS0646P.
 
 The aim is to build a simple classifier that tells attack traffic apart from normal (benign)
 traffic, using only the features a network switch could work out from the first few packets

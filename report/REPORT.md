@@ -1,6 +1,6 @@
 # Detecting DDoS from the First Few Packets of a Flow (CIC-IDS2017)
 
-SOP trial task, Track B (network security) | ID: 2023A7PS0646P | Submitted to Dr. K Hari Babu, BITS Pilani
+Samarth Kothari (2023A7PS0646P) | SOP trial task, Track B | Submitted to Dr. K Hari Babu, BITS Pilani
 
 ## 1. Goal
 
