@@ -32,8 +32,8 @@
 6. **Smaller issues on the way.**
    - My first download script used `declare -A` (an associative array), which macOS's
      bash 3.2 does not support. *Fix:* replaced it with a `case` statement.
-   - The system Python 3.9 had no scikit-learn. *Fix:* a local `.venv` with
-     `requirements.txt` (gitignored).
+   - The system Python 3.9 had no scikit-learn. *Fix:* a local `.venv` (gitignored)
+     with the packages from `requirements.txt`.
    - `Fwd Header Length` appears twice in the CSV. pandas renames the second copy
      `Fwd Header Length.1`, and I left it in the ALL set (78 features).
 
