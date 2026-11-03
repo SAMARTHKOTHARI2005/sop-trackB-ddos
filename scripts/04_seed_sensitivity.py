@@ -15,9 +15,9 @@ import argparse
 
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.tree import DecisionTreeClassifier
 
-from common import DEFAULT_SEED, EARLY, FRIDAY, WEDNESDAY, clean, is_attack, load_csv, scores
+from common import DEFAULT_SEED, EARLY, is_attack, load_both_days, scores, table, tree_rules_table
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--depth", type=int, default=5)
@@ -26,17 +26,15 @@ args = parser.parse_args()
 
 WED_ATTACKS = ["DoS Hulk", "DoS GoldenEye", "DoS slowloris", "DoS Slowhttptest"]
 
-friday = clean(load_csv(FRIDAY), "Friday")
-wednesday = clean(load_csv(WEDNESDAY), "Wednesday")
+friday, wednesday, cleaning_summary = load_both_days()
 y_friday = is_attack(friday)
 y_wednesday = is_attack(wednesday)
-
-print(f"\nEARLY tree, depth {args.depth}")
-print(f"{'seed':>4} | {'Fri P':>6} {'Fri R':>6} | {'Wed P':>6} {'Wed R':>6} | "
-      + " ".join(f"{attack.replace('DoS ', ''):>11}" for attack in WED_ATTACKS) + " | leaves")
+print("=== Cleaning ===")
+print(cleaning_summary)
 
 trees = {}
 wed_recall = {}
+rows = []
 for seed in args.seeds:
     # same split and tree as 02_train.py, just with a different seed
     train_idx, test_idx = train_test_split(np.arange(len(friday)), test_size=0.30,
@@ -49,11 +47,13 @@ for seed in args.seeds:
     wed_pred = model.predict(wednesday[EARLY])
     wed_result = scores(y_wednesday, wed_pred)
     wed_recall[seed] = wed_result["recall"]
-    caught = [wed_pred[(wednesday["Label"] == attack).values].mean() for attack in WED_ATTACKS]
+    caught = [float(wed_pred[(wednesday["Label"] == attack).values].mean()) for attack in WED_ATTACKS]
+    rows.append([seed, fri_result["precision"], fri_result["recall"],
+                 wed_result["precision"], wed_result["recall"]] + caught + [model.get_n_leaves()])
 
-    print(f"{seed:>4} | {fri_result['precision']:6.4f} {fri_result['recall']:6.4f} | "
-          f"{wed_result['precision']:6.4f} {wed_result['recall']:6.4f} | "
-          + " ".join(f"{share:11.4f}" for share in caught) + f" | {model.get_n_leaves()}")
+print(f"\n=== EARLY tree (depth {args.depth}) with each seed; the last attack columns = share of that attack caught ===")
+print(table(["seed", "Fri precision", "Fri recall", "Wed precision", "Wed recall"]
+            + [attack.replace("DoS ", "") for attack in WED_ATTACKS] + ["leaves"], rows))
 
 # Print the rules of the seed-46 tree and of the tree with the best Wednesday recall
 if DEFAULT_SEED in trees:
@@ -68,4 +68,4 @@ if best_seed != main_seed:
 
 for seed, label in to_show:
     print(f"\n=== EARLY tree rules, seed {seed} ({label}) ===")
-    print(export_text(trees[seed], feature_names=EARLY, max_depth=args.depth))
+    print(tree_rules_table(trees[seed], EARLY))

@@ -41,21 +41,30 @@ for file in "${FILES[@]}"; do
   fi
 done
 
-# Write the checksums (shasum on macOS, sha256sum on Linux)
+# Write the checksums (shasum on macOS, sha256sum on Linux). Full hashes go in data/SHA256SUMS.
 if command -v sha256sum >/dev/null 2>&1; then SHA="sha256sum"; else SHA="shasum -a 256"; fi
 (cd data && $SHA "${FILES[@]}" > SHA256SUMS)
-echo "--- data/SHA256SUMS ---"
-cat data/SHA256SUMS
 
-# Check each hash against the expected one (SHA256SUMS lines look like "<hash>  <file>")
+# Check each hash against the expected one and print the result as a table
+# (SHA256SUMS lines look like "<hash>  <file>")
+dashes() { printf -- '-%.0s' $(seq "$1"); }
+border="+$(dashes 50)+$(dashes 18)+$(dashes 18)+$(dashes 7)+$(dashes 6)+"
+row() { printf "| %-48s | %-16s | %-16s | %-5s | %4s |\n" "$@"; }
+
+echo "$border"
+row "file" "sha256 prefix" "expected" "check" "size"
+echo "$border"
+all_ok=true
 for file in "${FILES[@]}"; do
   actual=$(grep -F "  $file" data/SHA256SUMS | cut -c1-16)
   expected=$(expected_hash "$file")
-  if [[ "$actual" == "$expected" ]]; then
-    echo "[ok] $file sha256 prefix $actual"
-  else
-    echo "ERROR: $file sha256 prefix $actual != expected $expected" >&2
-    exit 1
-  fi
+  size=$(du -h "data/$file" | cut -f1 | tr -d ' ')
+  if [[ "$actual" == "$expected" ]]; then status="ok"; else status="FAIL"; all_ok=false; fi
+  row "$file" "$actual" "$expected" "$status" "$size"
 done
-ls -lh data/*.csv
+echo "$border"
+
+if [[ "$all_ok" != true ]]; then
+  echo "ERROR: at least one file does not match its expected SHA-256" >&2
+  exit 1
+fi

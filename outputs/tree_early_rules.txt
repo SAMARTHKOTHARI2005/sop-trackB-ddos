@@ -1,5 +1,28 @@
-# EARLY DecisionTree, max_depth=5, seed=46, leaves=16
-# class 1 = attack, class 0 = benign
+EARLY decision tree, max_depth=5, seed=46, leaves=16
+
+Rules (one row per leaf; 'training flows' = how many training flows ended up in that leaf):
++------+------------------------+------------------------+-------------------------+----------------------+--------+----------------+
+| rule | Destination Port       | Init_Win_bytes_forward | Init_Win_bytes_backward | min_seg_size_forward | class  | training flows |
++------+------------------------+------------------------+-------------------------+----------------------+--------+----------------+
+|    1 | <= 64866               | <= -0.5                | any                     | any                  | benign |          21756 |
+|    2 | <= 64866               | > -0.5 and <= 1        | any                     | any                  | benign |            238 |
+|    3 | <= 64866               | > 1 and <= 250.5       | any                     | any                  | benign |          21013 |
+|    4 | > 64866 and <= 64869.5 | <= 250.5               | any                     | any                  | attack |              1 |
+|    5 | > 64869.5 and <= 64874 | <= 250.5               | any                     | any                  | benign |              2 |
+|    6 | > 64874                | <= 250.5               | any                     | any                  | benign |            457 |
+|    7 | <= 261.5               | > 250.5 and <= 251.5   | any                     | <= 26                | benign |             30 |
+|    8 | <= 261.5               | > 250.5 and <= 251.5   | any                     | > 26                 | benign |             14 |
+|    9 | > 261.5                | > 250.5 and <= 251.5   | any                     | any                  | benign |             83 |
+|   10 | any                    | > 251.5 and <= 255.5   | any                     | any                  | benign |           1161 |
+|   11 | <= 84                  | > 255.5 and <= 12141.5 | <= 229.5                | <= 24                | attack |          90385 |
+|   12 | <= 84                  | > 255.5 and <= 12141.5 | <= 229.5                | > 24                 | benign |             97 |
+|   13 | <= 84                  | > 12141.5              | <= 228                  | any                  | benign |           1345 |
+|   14 | <= 84                  | > 12141.5              | > 228 and <= 229.5      | any                  | attack |            126 |
+|   15 | <= 84                  | > 255.5                | > 229.5                 | any                  | benign |           3175 |
+|   16 | > 84                   | > 255.5                | any                     | any                  | benign |          16274 |
++------+------------------------+------------------------+-------------------------+----------------------+--------+----------------+
+
+Full tree (class 1 = attack, class 0 = benign):
 |--- Init_Win_bytes_forward <= 255.50
 |   |--- Init_Win_bytes_forward <= 250.50
 |   |   |--- Destination Port <= 64866.00

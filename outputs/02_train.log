@@ -1,49 +1,126 @@
-seed = 46   tree depth = 5   RF trees = 100
-[clean Friday] rows in: 225745  dropped NaN/inf: 34  dropped duplicates: 2629  rows out: 223082
-[clean Wednesday] rows in: 692703  dropped NaN/inf: 1297  dropped duplicates: 80914  rows out: 610492
-ALL feature count: 78
-Friday labels after cleaning: {'DDoS': 128014, 'BENIGN': 95068}
-Wednesday labels after cleaning: {'BENIGN': 416736, 'DoS Hulk': 172846, 'DoS GoldenEye': 10286, 'DoS slowloris': 5385, 'DoS Slowhttptest': 5228, 'Heartbleed': 11}
-Friday split: train 156157  test 66925
+=== Settings ===
++-------------------------+--------+
+| setting                 |  value |
++-------------------------+--------+
+| seed                    |     46 |
+| tree depth              |      5 |
+| random forest trees     |    100 |
+| ALL feature count       |     78 |
+| Friday train rows (70%) | 156157 |
+| Friday test rows (30%)  |  66925 |
++-------------------------+--------+
+
+=== Cleaning ===
++-----------+---------+-----------------+--------------------+----------+
+| day       | rows in | dropped NaN/inf | dropped duplicates | rows out |
++-----------+---------+-----------------+--------------------+----------+
+| Friday    |  225745 |              34 |               2629 |   223082 |
+| Wednesday |  692703 |            1297 |              80914 |   610492 |
++-----------+---------+-----------------+--------------------+----------+
+
+=== Labels after cleaning ===
++-----------+------------------+--------+
+| day       | label            |  flows |
++-----------+------------------+--------+
+| Friday    | DDoS             | 128014 |
+| Friday    | BENIGN           |  95068 |
+| Wednesday | BENIGN           | 416736 |
+| Wednesday | DoS Hulk         | 172846 |
+| Wednesday | DoS GoldenEye    |  10286 |
+| Wednesday | DoS slowloris    |   5385 |
+| Wednesday | DoS Slowhttptest |   5228 |
+| Wednesday | Heartbleed       |     11 |
++-----------+------------------+--------+
 
 === Friday held-out test (30%), attack class ===
-EARLY          precision=0.9896  recall=0.9995  TP=38386  FP=405  FN=18  TN=28116  leaves=16
-EARLY_NO_PORT  precision=0.9451  recall=0.9995  TP=38386  FP=2228  FN=18  TN=26293  leaves=15
-COUNTER        precision=0.9995  recall=0.9986  TP=38349  FP=21  FN=55  TN=28500  leaves=15
-ALL            precision=1.0  recall=0.9999  TP=38399  FP=1  FN=5  TN=28520
++---------------+-----------+--------+-------+------+----+-------+--------+
+| model         | precision | recall |    TP |   FP | FN |    TN | leaves |
++---------------+-----------+--------+-------+------+----+-------+--------+
+| EARLY         |    0.9896 | 0.9995 | 38386 |  405 | 18 | 28116 |     16 |
+| EARLY_NO_PORT |    0.9451 | 0.9995 | 38386 | 2228 | 18 | 26293 |     15 |
+| COUNTER       |    0.9995 | 0.9986 | 38349 |   21 | 55 | 28500 |     15 |
+| ALL           |    1.0000 | 0.9999 | 38399 |    1 |  5 | 28520 |      - |
++---------------+-----------+--------+-------+------+----+-------+--------+
 
-=== feature importances ===
-[EARLY] Init_Win_bytes_forward=0.5854, Destination Port=0.3310, Init_Win_bytes_backward=0.0811, min_seg_size_forward=0.0026
-[EARLY_NO_PORT] Init_Win_bytes_forward=0.6403, Init_Win_bytes_backward=0.2823, min_seg_size_forward=0.0774
-[COUNTER] Fwd Packet Length Max=0.5788, Total Length of Fwd Packets=0.4191, Total Fwd Packets=0.0010, Flow Duration=0.0006, Total Backward Packets=0.0005
-[ALL] Total Length of Fwd Packets=0.0822, Avg Fwd Segment Size=0.0733, Fwd Packet Length Max=0.0732, Fwd Packet Length Mean=0.0728, Fwd IAT Std=0.0575, Destination Port=0.0566, Subflow Fwd Bytes=0.0530, Init_Win_bytes_forward=0.0451, Total Fwd Packets=0.0385, Fwd IAT Max=0.0380
+=== Feature importances (top 10 per model) ===
++---------------+------+-----------------------------+------------+
+| model         | rank | feature                     | importance |
++---------------+------+-----------------------------+------------+
+| EARLY         |    1 | Init_Win_bytes_forward      |     0.5854 |
+|               |    2 | Destination Port            |     0.3310 |
+|               |    3 | Init_Win_bytes_backward     |     0.0811 |
+|               |    4 | min_seg_size_forward        |     0.0026 |
+| EARLY_NO_PORT |    1 | Init_Win_bytes_forward      |     0.6403 |
+|               |    2 | Init_Win_bytes_backward     |     0.2823 |
+|               |    3 | min_seg_size_forward        |     0.0774 |
+| COUNTER       |    1 | Fwd Packet Length Max       |     0.5788 |
+|               |    2 | Total Length of Fwd Packets |     0.4191 |
+|               |    3 | Total Fwd Packets           |     0.0010 |
+|               |    4 | Flow Duration               |     0.0006 |
+|               |    5 | Total Backward Packets      |     0.0005 |
+| ALL           |    1 | Total Length of Fwd Packets |     0.0822 |
+|               |    2 | Avg Fwd Segment Size        |     0.0733 |
+|               |    3 | Fwd Packet Length Max       |     0.0732 |
+|               |    4 | Fwd Packet Length Mean      |     0.0728 |
+|               |    5 | Fwd IAT Std                 |     0.0575 |
+|               |    6 | Destination Port            |     0.0566 |
+|               |    7 | Subflow Fwd Bytes           |     0.0530 |
+|               |    8 | Init_Win_bytes_forward      |     0.0451 |
+|               |    9 | Total Fwd Packets           |     0.0385 |
+|               |   10 | Fwd IAT Max                 |     0.0380 |
++---------------+------+-----------------------------+------------+
 
 === 5-fold stratified CV, EARLY tree, Friday ===
-{"precision_mean": 0.9896, "precision_std": 0.0004, "recall_mean": 0.9998, "recall_std": 0.0, "precision_folds": [0.9894, 0.9897, 0.9903, 0.9891, 0.9896], "recall_folds": [0.9999, 0.9998, 0.9998, 0.9998, 0.9998]}
++------+-----------+--------+
+| fold | precision | recall |
++------+-----------+--------+
+| 1    |    0.9894 | 0.9999 |
+| 2    |    0.9897 | 0.9998 |
+| 3    |    0.9903 | 0.9998 |
+| 4    |    0.9891 | 0.9998 |
+| 5    |    0.9896 | 0.9998 |
+| mean |    0.9896 | 0.9998 |
+| std  |    0.0004 | 0.0000 |
++------+-----------+--------+
 
-=== EARLY false positives on Friday test: 405 flows, top destination ports ===
-Destination Port
-80    390
-21     15
+=== EARLY false positives on Friday test: 405 flows, by destination port ===
++------------------+-----------------+
+| destination port | false positives |
++------------------+-----------------+
+|               80 |             390 |
+|               21 |              15 |
++------------------+-----------------+
 
-=== Cross-day: Friday-trained models on Wednesday (all rows) ===
-EARLY          precision=0.0855 recall=0.0035 TP=685 FP=7330 FN=193071 TN=409406
-    fraction flagged as attack per label: BENIGN=0.0176, DoS GoldenEye=0.0000, DoS Hulk=0.0040, DoS Slowhttptest=0.0000, DoS slowloris=0.0000, Heartbleed=0.0000
-EARLY_NO_PORT  precision=0.0178 recall=0.0035 TP=685 FP=37889 FN=193071 TN=378847
-    fraction flagged as attack per label: BENIGN=0.0909, DoS GoldenEye=0.0000, DoS Hulk=0.0040, DoS Slowhttptest=0.0000, DoS slowloris=0.0000, Heartbleed=0.0000
-COUNTER        precision=0.4603 recall=0.0029 TP=563 FP=660 FN=193193 TN=416076
-    fraction flagged as attack per label: BENIGN=0.0016, DoS GoldenEye=0.0000, DoS Hulk=0.0031, DoS Slowhttptest=0.0063, DoS slowloris=0.0000, Heartbleed=0.0000
-ALL            precision=0.5073 recall=0.0007 TP=139 FP=135 FN=193617 TN=416601
-    fraction flagged as attack per label: BENIGN=0.0003, DoS GoldenEye=0.0000, DoS Hulk=0.0008, DoS Slowhttptest=0.0002, DoS slowloris=0.0000, Heartbleed=0.0000
+=== Cross-day: Friday-trained models on Wednesday (all rows), attack class ===
++---------------+-----------+--------+-----+-------+--------+--------+
+| model         | precision | recall |  TP |    FP |     FN |     TN |
++---------------+-----------+--------+-----+-------+--------+--------+
+| EARLY         |    0.0855 | 0.0035 | 685 |  7330 | 193071 | 409406 |
+| EARLY_NO_PORT |    0.0178 | 0.0035 | 685 | 37889 | 193071 | 378847 |
+| COUNTER       |    0.4603 | 0.0029 | 563 |   660 | 193193 | 416076 |
+| ALL           |    0.5073 | 0.0007 | 139 |   135 | 193617 | 416601 |
++---------------+-----------+--------+-----+-------+--------+--------+
 
-=== median EARLY feature values per (day, label) ===
-                            Destination Port  Init_Win_bytes_forward  Init_Win_bytes_backward  min_seg_size_forward  n_flows
-Day       Label                                                                                                             
-Friday    BENIGN                       443.0                   229.0                      0.0                  20.0    95068
-          DDoS                          80.0                   256.0                    229.0                  20.0   128014
-Wednesday BENIGN                        80.0                    63.0                     -1.0                  20.0   416736
-          DoS GoldenEye                 80.0                 29200.0                    235.0                  32.0    10286
-          DoS Hulk                      80.0                   251.0                    235.0                  32.0   172846
-          DoS Slowhttptest              80.0                 29200.0                     -1.0                  40.0     5228
-          DoS slowloris                 80.0                 29200.0                      0.0                  32.0     5385
-          Heartbleed                   444.0                   235.0                    235.0                  32.0       11
+=== Cross-day: fraction of each Wednesday label flagged as attack ===
++---------------+--------+---------------+----------+------------------+---------------+------------+
+| model         | BENIGN | DoS GoldenEye | DoS Hulk | DoS Slowhttptest | DoS slowloris | Heartbleed |
++---------------+--------+---------------+----------+------------------+---------------+------------+
+| EARLY         | 0.0176 |        0.0000 |   0.0040 |           0.0000 |        0.0000 |     0.0000 |
+| EARLY_NO_PORT | 0.0909 |        0.0000 |   0.0040 |           0.0000 |        0.0000 |     0.0000 |
+| COUNTER       | 0.0016 |        0.0000 |   0.0031 |           0.0063 |        0.0000 |     0.0000 |
+| ALL           | 0.0003 |        0.0000 |   0.0008 |           0.0002 |        0.0000 |     0.0000 |
++---------------+--------+---------------+----------+------------------+---------------+------------+
+
+=== Median EARLY feature values per day and label ===
++-----------+------------------+------------------+------------------------+-------------------------+----------------------+--------+
+| day       | label            | Destination Port | Init_Win_bytes_forward | Init_Win_bytes_backward | min_seg_size_forward |  flows |
++-----------+------------------+------------------+------------------------+-------------------------+----------------------+--------+
+| Friday    | BENIGN           |              443 |                    229 |                       0 |                   20 |  95068 |
+| Friday    | DDoS             |               80 |                    256 |                     229 |                   20 | 128014 |
+| Wednesday | BENIGN           |               80 |                     63 |                      -1 |                   20 | 416736 |
+| Wednesday | DoS GoldenEye    |               80 |                  29200 |                     235 |                   32 |  10286 |
+| Wednesday | DoS Hulk         |               80 |                    251 |                     235 |                   32 | 172846 |
+| Wednesday | DoS Slowhttptest |               80 |                  29200 |                      -1 |                   40 |   5228 |
+| Wednesday | DoS slowloris    |               80 |                  29200 |                       0 |                   32 |   5385 |
+| Wednesday | Heartbleed       |              444 |                    235 |                     235 |                   32 |     11 |
++-----------+------------------+------------------+------------------------+-------------------------+----------------------+--------+

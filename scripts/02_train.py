@@ -26,7 +26,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_text
 
-from common import DEFAULT_SEED, EARLY, FRIDAY, OUTPUTS, WEDNESDAY, clean, is_attack, load_csv, scores
+from common import DEFAULT_SEED, EARLY, OUTPUTS, is_attack, load_both_days, scores, table, tree_rules_table
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--depth", type=int, default=5, help="max depth of the decision trees")
@@ -56,23 +56,28 @@ EARLY_NO_PORT = [col for col in EARLY if col != "Destination Port"]
 COUNTER = ["Total Fwd Packets", "Total Backward Packets",
            "Total Length of Fwd Packets", "Fwd Packet Length Max", "Flow Duration"]
 
-log(f"seed = {args.seed}   tree depth = {args.depth}   RF trees = {args.trees}")
-
 # Load and clean both days
-friday = clean(load_csv(FRIDAY), "Friday", log)
-wednesday = clean(load_csv(WEDNESDAY), "Wednesday", log)
+friday, wednesday, cleaning_summary = load_both_days()
 ALL = [col for col in friday.columns if col != "Label"]
-log(f"ALL feature count: {len(ALL)}")
-
 y_friday = is_attack(friday)
 y_wednesday = is_attack(wednesday)
-log("Friday labels after cleaning:", friday["Label"].value_counts().to_dict())
-log("Wednesday labels after cleaning:", wednesday["Label"].value_counts().to_dict())
 
 # Stratified 70/30 split of Friday. Split the row numbers, so every model
 # is trained and tested on exactly the same rows.
 train_idx, test_idx = train_test_split(np.arange(len(friday)), test_size=0.30, stratify=y_friday, random_state=args.seed)
-log(f"Friday split: train {len(train_idx)}  test {len(test_idx)}")
+
+log("=== Settings ===")
+log(table(["setting", "value"], [
+    ["seed", args.seed], ["tree depth", args.depth], ["random forest trees", args.trees],
+    ["ALL feature count", len(ALL)], ["Friday train rows (70%)", len(train_idx)],
+    ["Friday test rows (30%)", len(test_idx)],
+]))
+log("\n=== Cleaning ===")
+log(cleaning_summary)
+log("\n=== Labels after cleaning ===")
+log(table(["day", "label", "flows"],
+          [["Friday", label, n] for label, n in friday["Label"].value_counts().items()]
+          + [["Wednesday", label, n] for label, n in wednesday["Label"].value_counts().items()]))
 
 models = {
     "EARLY": (EARLY, tree),
@@ -90,7 +95,7 @@ results = {"seed": args.seed, "depth": args.depth, "rf_trees": args.trees,
 trained = {}
 
 # Train on Friday's 70% and score on the other 30%
-log("\n=== Friday held-out test (30%), attack class ===")
+rows = []
 for name, (features, make_model) in models.items():
     model = make_model().fit(friday.loc[train_idx, features], y_friday[train_idx])
     trained[name] = model
@@ -98,16 +103,22 @@ for name, (features, make_model) in models.items():
     if isinstance(model, DecisionTreeClassifier):
         result["leaves"] = int(model.get_n_leaves())
     results["friday_test"][name] = result
-    log(f"{name:14s} " + "  ".join(f"{k}={v}" for k, v in result.items()))
+    rows.append([name, result["precision"], result["recall"], result["TP"], result["FP"],
+                 result["FN"], result["TN"], result.get("leaves", "-")])
+log("\n=== Friday held-out test (30%), attack class ===")
+log(table(["model", "precision", "recall", "TP", "FP", "FN", "TN", "leaves"], rows))
 
 # Which features each model relies on (top 10)
-log("\n=== feature importances ===")
 results["importances"] = {}
+rows = []
 for name, (features, _) in models.items():
     importances = pd.Series(trained[name].feature_importances_, index=features)
     importances = importances.sort_values(ascending=False).head(10)
     results["importances"][name] = {k: round(float(v), 4) for k, v in importances.items()}
-    log(f"[{name}] " + ", ".join(f"{k}={v:.4f}" for k, v in importances.items()))
+    for rank, (feature, value) in enumerate(importances.items(), start=1):
+        rows.append([name if rank == 1 else "", rank, feature, float(value)])
+log("\n=== Feature importances (top 10 per model) ===")
+log(table(["model", "rank", "feature", "importance"], rows))
 
 # 5-fold stratified cross-validation of the EARLY tree on all of Friday
 folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=args.seed)
@@ -123,13 +134,19 @@ results["cv_early"] = {
     "recall_folds": [round(float(v), 4) for v in cv_recall],
 }
 log("\n=== 5-fold stratified CV, EARLY tree, Friday ===")
-log(json.dumps(results["cv_early"]))
+log(table(["fold", "precision", "recall"],
+          [[i, float(p), float(r)] for i, (p, r) in enumerate(zip(cv_precision, cv_recall), start=1)]
+          + [["mean", results["cv_early"]["precision_mean"], results["cv_early"]["recall_mean"]],
+             ["std", results["cv_early"]["precision_std"], results["cv_early"]["recall_std"]]]))
 
-# Save the EARLY tree as if/else rules (these would become switch table entries)
+# Save the EARLY tree's rules: first as a table (one row per leaf, i.e. one
+# switch table entry), then as the full if/else tree
 early_tree = trained["EARLY"]
 (out_dir / "tree_early_rules.txt").write_text(
-    f"# EARLY DecisionTree, max_depth={args.depth}, seed={args.seed}, "
-    f"leaves={early_tree.get_n_leaves()}\n# class 1 = attack, class 0 = benign\n"
+    f"EARLY decision tree, max_depth={args.depth}, seed={args.seed}, leaves={early_tree.get_n_leaves()}\n\n"
+    "Rules (one row per leaf; 'training flows' = how many training flows ended up in that leaf):\n"
+    + tree_rules_table(early_tree, EARLY)
+    + "\n\nFull tree (class 1 = attack, class 0 = benign):\n"
     + export_text(early_tree, feature_names=EARLY, max_depth=args.depth))
 
 # Which ports do the EARLY tree's false alarms on the Friday test set go to?
@@ -137,21 +154,23 @@ test_rows = friday.loc[test_idx]
 false_alarm = (early_tree.predict(test_rows[EARLY]) == 1) & (y_friday[test_idx] == 0)
 false_alarm_ports = test_rows.loc[false_alarm, "Destination Port"].value_counts().head(15)
 results["early_false_positive_ports"] = {str(port): int(n) for port, n in false_alarm_ports.items()}
-log(f"\n=== EARLY false positives on Friday test: {int(false_alarm.sum())} flows, top destination ports ===")
-log(false_alarm_ports.to_string())
+log(f"\n=== EARLY false positives on Friday test: {int(false_alarm.sum())} flows, by destination port ===")
+log(table(["destination port", "false positives"], list(false_alarm_ports.items())))
 
 # Failure case: run the Friday-trained models, unchanged, on Wednesday
-log("\n=== Cross-day: Friday-trained models on Wednesday (all rows) ===")
+score_rows, flagged_rows = [], []
 for name, (features, _) in models.items():
     predictions = trained[name].predict(wednesday[features])
     result = scores(y_wednesday, predictions)
     share_flagged = pd.Series(predictions).groupby(wednesday["Label"].values).mean()
     result["fraction_flagged_per_label"] = {label: round(float(v), 4) for label, v in share_flagged.items()}
     results["wednesday"][name] = result
-    log(f"{name:14s} precision={result['precision']} recall={result['recall']} "
-        f"TP={result['TP']} FP={result['FP']} FN={result['FN']} TN={result['TN']}")
-    log("    fraction flagged as attack per label: " +
-        ", ".join(f"{label}={v:.4f}" for label, v in result["fraction_flagged_per_label"].items()))
+    score_rows.append([name, result["precision"], result["recall"], result["TP"], result["FP"], result["FN"], result["TN"]])
+    flagged_rows.append([name] + list(result["fraction_flagged_per_label"].values()))
+log("\n=== Cross-day: Friday-trained models on Wednesday (all rows), attack class ===")
+log(table(["model", "precision", "recall", "TP", "FP", "FN", "TN"], score_rows))
+log("\n=== Cross-day: fraction of each Wednesday label flagged as attack ===")
+log(table(["model"] + list(result["fraction_flagged_per_label"]), flagged_rows))
 
 # Median EARLY values per day and label, to see why it fails
 both_days = pd.concat([friday.assign(Day="Friday"), wednesday.assign(Day="Wednesday")])
@@ -160,8 +179,10 @@ medians = by_day_label[EARLY].median()
 medians["n_flows"] = by_day_label.size()
 results["median_early_features"] = {f"{day}|{label}": {k: float(v) for k, v in row.items()}
                                     for (day, label), row in medians.iterrows()}
-log("\n=== median EARLY feature values per (day, label) ===")
-log(medians.to_string())
+log("\n=== Median EARLY feature values per day and label ===")
+log(table(["day", "label"] + EARLY + ["flows"],
+          [[day, label] + [f"{row[f]:g}" for f in EARLY] + [int(row["n_flows"])]
+           for (day, label), row in medians.iterrows()]))
 
 # Save everything
 (out_dir / "results.json").write_text(json.dumps(results, indent=2))

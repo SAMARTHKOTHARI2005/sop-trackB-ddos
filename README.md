@@ -131,7 +131,7 @@ data/
 outputs/
   00_download.log  01_inspect.log  02_train.log  03_fingerprint.log  04_seed_sensitivity.log
   results.json              every number from 02_train.py
-  tree_early_rules.txt      the EARLY decision tree written out as if/else rules
+  tree_early_rules.txt      the EARLY tree as a rule table (one row per leaf) and as if/else rules
 report/
   REPORT.pdf  REPORT.md  STUCK_NOTES.md  WEEK2.md  AI_USE.md
 ```
@@ -342,7 +342,7 @@ directly.
 
 With depth 5 there are at most 5 questions on any path, so at most 2⁵ = 32 rules, which is
 small enough for a switch. The EARLY tree ended up with 16 leaves. Depth can be changed with
-`--depth`. The full tree is in [outputs/tree_early_rules.txt](outputs/tree_early_rules.txt).
+`--depth`. Its rules, one table row per leaf, are in [outputs/tree_early_rules.txt](outputs/tree_early_rules.txt).
 
 #### Precision and recall
 
@@ -473,8 +473,11 @@ main result everywhere else.
 To find out why, I compared the rules of the seed-46 tree with the seed-1 tree. The seed-1 tree
 has two extra small "attack" rules:
 
-- "window = 251", which comes from only 17 of the 128,014 Friday DDoS flows
-- "window = 0", which comes from only 27 of them
+- "window = 0" (and port up to 261), a leaf that holds only 22 of the 156,157 training flows
+- "window = 251" (and port up to 84), a leaf that holds only 2 training flows
+
+These window values are rare on Friday anyway: only 27 and 17 of the 128,014 DDoS flows have
+them. Both leaves are in the rules table at the end of `outputs/04_seed_sensitivity.log`.
 
 As it happens, the two most common window values for Hulk are 0 (34%) and 251 (33%). So the
 seed-1 tree catches Hulk because of two tiny rules that just happen to line up, not because

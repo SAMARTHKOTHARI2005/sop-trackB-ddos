@@ -43,6 +43,6 @@
    `04_seed_sensitivity.py`, which retrains the EARLY tree with seed 46 and seeds 0-9. The
    Friday scores stay almost identical, but the Wednesday recall only takes the values
    0.0035, 0.3075 and 0.5724. The difference comes from two tiny leaves (Init_Win_fwd = 251
-   and = 0) that only some seeds label "attack". They are built from 17 and 27 Friday DDoS
+   and = 0) that only some seeds label "attack". Those leaves hold only 2 and 22 training
    flows and happen to match Hulk's windows. I kept seed 46 as the main result, as required,
    and report this as a limitation instead of picking the seed that looks best.
