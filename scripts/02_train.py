@@ -13,7 +13,7 @@ Everything random (train/test split, CV folds, trees) uses --seed, which
 defaults to 46 (last two digits of my ID, 2023A7PS0646P).
 
 Usage:
-  python scripts/02_train.py                       # depth 5, seed 46, writes to outputs/
+  python scripts/02_train.py  # depth 5, seed 46, writes to outputs/
   python scripts/02_train.py --depth 3 --out outputs/depth3
 """
 import argparse
@@ -26,8 +26,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_text
 
-from common import (DEFAULT_SEED, EARLY, FRIDAY, OUTPUTS, WEDNESDAY,
-                    clean, is_attack, load_csv, scores)
+from common import DEFAULT_SEED, EARLY, FRIDAY, OUTPUTS, WEDNESDAY, clean, is_attack, load_csv, scores
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--depth", type=int, default=5, help="max depth of the decision trees")
@@ -72,16 +71,14 @@ log("Wednesday labels after cleaning:", wednesday["Label"].value_counts().to_dic
 
 # Stratified 70/30 split of Friday. Split the row numbers, so every model
 # is trained and tested on exactly the same rows.
-train_idx, test_idx = train_test_split(np.arange(len(friday)), test_size=0.30,
-                                       stratify=y_friday, random_state=args.seed)
+train_idx, test_idx = train_test_split(np.arange(len(friday)), test_size=0.30, stratify=y_friday, random_state=args.seed)
 log(f"Friday split: train {len(train_idx)}  test {len(test_idx)}")
 
 models = {
     "EARLY": (EARLY, tree),
     "EARLY_NO_PORT": (EARLY_NO_PORT, tree),
     "COUNTER": (COUNTER, tree),
-    "ALL": (ALL, lambda: RandomForestClassifier(n_estimators=args.trees,
-                                                random_state=args.seed, n_jobs=-1)),
+    "ALL": (ALL, lambda: RandomForestClassifier(n_estimators=args.trees, random_state=args.seed, n_jobs=-1)),
 }
 
 results = {"seed": args.seed, "depth": args.depth, "rf_trees": args.trees,
@@ -114,8 +111,7 @@ for name, (features, _) in models.items():
 
 # 5-fold stratified cross-validation of the EARLY tree on all of Friday
 folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=args.seed)
-cv_results = cross_validate(tree(), friday[EARLY], y_friday, cv=folds,
-                            scoring=["precision", "recall"])
+cv_results = cross_validate(tree(), friday[EARLY], y_friday, cv=folds, scoring=["precision", "recall"])
 cv_precision = cv_results["test_precision"]
 cv_recall = cv_results["test_recall"]
 results["cv_early"] = {

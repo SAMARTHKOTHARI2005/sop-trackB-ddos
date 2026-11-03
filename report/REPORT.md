@@ -86,7 +86,7 @@ fit Friday more closely. The fingerprint rule
 catches 3 of the 193,756 Wednesday attacks.
 
 As a robustness check I retrained EARLY with seeds 0-9 as well. Friday precision stayed
-between 0.989 and 0.991, but Wednesday recall was always 0.0035 (seed 46), 0.3075 or 0.5724
+between 0.9893 and 0.9905, but Wednesday recall was always 0.0035 (seed 46), 0.3075 or 0.5724
 (64% of Hulk). The difference comes from two small leaves that some seeds label as attack,
 for window = 251 and window = 0, built from only 17 and 27 Friday flows. Hulk's most common
 windows happen to be 0 (34%) and 251 (33%). So any cross-day success here is coincidence, and

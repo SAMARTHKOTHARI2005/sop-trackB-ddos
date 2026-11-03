@@ -13,7 +13,7 @@ on purpose to check how stable the results are.
 
 | Document | What's in it |
 |---|---|
-| [report/REPORT.md](report/REPORT.md) | The main report, about 2 pages: goal, method, results, failure case, limitations |
+| [report/REPORT.pdf](report/REPORT.pdf) ([.md](report/REPORT.md)) | The main report, 2 pages: goal, method, results, failure case, limitations |
 | [report/STUCK_NOTES.md](report/STUCK_NOTES.md) | Things I got stuck on and how I fixed them |
 | [report/WEEK2.md](report/WEEK2.md) | What I'd do in week 2 |
 | [report/AI_USE.md](report/AI_USE.md) | How I used AI tools |
@@ -133,7 +133,7 @@ outputs/
   results.json              every number from 02_train.py
   tree_early_rules.txt      the EARLY decision tree written out as if/else rules
 report/
-  REPORT.md  STUCK_NOTES.md  WEEK2.md  AI_USE.md
+  REPORT.pdf  REPORT.md  STUCK_NOTES.md  WEEK2.md  AI_USE.md
 ```
 
 ---
@@ -466,7 +466,7 @@ whether that number is stable or just how this particular tree turned out, so as
 check I retrained the EARLY tree with seed 46 and seeds 0-9 (11 trees). Seed 46 is still the
 main result everywhere else.
 
-- Friday precision hardly changes, staying between 0.989 and 0.991.
+- Friday precision hardly changes, staying between 0.9893 and 0.9905.
 - Wednesday recall only ever takes one of three values: 0.0035 (seed 46), 0.3075 or 0.5724.
   The best case, e.g. seed 1, catches 64% of Hulk.
 
@@ -490,7 +490,7 @@ requires, and report this as a limitation instead of choosing whichever seed loo
 | File | What's in it |
 |---|---|
 | `README.md` | This file: setup, exact commands, layout, walkthrough |
-| `report/REPORT.md` | The ~2-page report: goal, method, results, failure case, limitations |
+| `report/REPORT.pdf` / `REPORT.md` | The 2-page report: goal, method, results, failure case, limitations |
 | `report/STUCK_NOTES.md` | The problems I hit and how I fixed them: server down, LFS pointers, spaces in column names, NaN/infinity, duplicates, bash 3.2, missing sklearn, the seed check |
 | `report/WEEK2.md` | Plan for week 2: get the raw packet captures (pcaps), compute real first-k-packet features for k = 2 to 10, always test across days, add per-source timers for slow attacks, put the tree into a P4 switch program on BMv2/Mininet, and connect it to my ResilientDAG work |
 | `report/AI_USE.md` | How I used AI tools |
