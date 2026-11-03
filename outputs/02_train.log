@@ -1,0 +1,49 @@
+seed = 46   tree depth = 5   RF trees = 100
+[clean Friday] rows in: 225745  dropped NaN/inf: 34  dropped duplicates: 2629  rows out: 223082
+[clean Wednesday] rows in: 692703  dropped NaN/inf: 1297  dropped duplicates: 80914  rows out: 610492
+ALL feature count: 78
+Friday labels after cleaning: {'DDoS': 128014, 'BENIGN': 95068}
+Wednesday labels after cleaning: {'BENIGN': 416736, 'DoS Hulk': 172846, 'DoS GoldenEye': 10286, 'DoS slowloris': 5385, 'DoS Slowhttptest': 5228, 'Heartbleed': 11}
+Friday split: train 156157  test 66925
+
+=== Friday held-out test (30%), attack class ===
+EARLY          precision=0.9896  recall=0.9995  TP=38386  FP=405  FN=18  TN=28116  leaves=16
+EARLY_NO_PORT  precision=0.9451  recall=0.9995  TP=38386  FP=2228  FN=18  TN=26293  leaves=15
+COUNTER        precision=0.9995  recall=0.9986  TP=38349  FP=21  FN=55  TN=28500  leaves=15
+ALL            precision=1.0  recall=0.9999  TP=38399  FP=1  FN=5  TN=28520
+
+=== feature importances ===
+[EARLY] Init_Win_bytes_forward=0.5854, Destination Port=0.3310, Init_Win_bytes_backward=0.0811, min_seg_size_forward=0.0026
+[EARLY_NO_PORT] Init_Win_bytes_forward=0.6403, Init_Win_bytes_backward=0.2823, min_seg_size_forward=0.0774
+[COUNTER] Fwd Packet Length Max=0.5788, Total Length of Fwd Packets=0.4191, Total Fwd Packets=0.0010, Flow Duration=0.0006, Total Backward Packets=0.0005
+[ALL] Total Length of Fwd Packets=0.0822, Avg Fwd Segment Size=0.0733, Fwd Packet Length Max=0.0732, Fwd Packet Length Mean=0.0728, Fwd IAT Std=0.0575, Destination Port=0.0566, Subflow Fwd Bytes=0.0530, Init_Win_bytes_forward=0.0451, Total Fwd Packets=0.0385, Fwd IAT Max=0.0380
+
+=== 5-fold stratified CV, EARLY tree, Friday ===
+{"precision_mean": 0.9896, "precision_std": 0.0004, "recall_mean": 0.9998, "recall_std": 0.0, "precision_folds": [0.9894, 0.9897, 0.9903, 0.9891, 0.9896], "recall_folds": [0.9999, 0.9998, 0.9998, 0.9998, 0.9998]}
+
+=== EARLY false positives on Friday test: 405 flows, top destination ports ===
+Destination Port
+80    390
+21     15
+
+=== Cross-day: Friday-trained models on Wednesday (all rows) ===
+EARLY          precision=0.0855 recall=0.0035 TP=685 FP=7330 FN=193071 TN=409406
+    fraction flagged as attack per label: BENIGN=0.0176, DoS GoldenEye=0.0000, DoS Hulk=0.0040, DoS Slowhttptest=0.0000, DoS slowloris=0.0000, Heartbleed=0.0000
+EARLY_NO_PORT  precision=0.0178 recall=0.0035 TP=685 FP=37889 FN=193071 TN=378847
+    fraction flagged as attack per label: BENIGN=0.0909, DoS GoldenEye=0.0000, DoS Hulk=0.0040, DoS Slowhttptest=0.0000, DoS slowloris=0.0000, Heartbleed=0.0000
+COUNTER        precision=0.4603 recall=0.0029 TP=563 FP=660 FN=193193 TN=416076
+    fraction flagged as attack per label: BENIGN=0.0016, DoS GoldenEye=0.0000, DoS Hulk=0.0031, DoS Slowhttptest=0.0063, DoS slowloris=0.0000, Heartbleed=0.0000
+ALL            precision=0.5073 recall=0.0007 TP=139 FP=135 FN=193617 TN=416601
+    fraction flagged as attack per label: BENIGN=0.0003, DoS GoldenEye=0.0000, DoS Hulk=0.0008, DoS Slowhttptest=0.0002, DoS slowloris=0.0000, Heartbleed=0.0000
+
+=== median EARLY feature values per (day, label) ===
+                            Destination Port  Init_Win_bytes_forward  Init_Win_bytes_backward  min_seg_size_forward  n_flows
+Day       Label                                                                                                             
+Friday    BENIGN                       443.0                   229.0                      0.0                  20.0    95068
+          DDoS                          80.0                   256.0                    229.0                  20.0   128014
+Wednesday BENIGN                        80.0                    63.0                     -1.0                  20.0   416736
+          DoS GoldenEye                 80.0                 29200.0                    235.0                  32.0    10286
+          DoS Hulk                      80.0                   251.0                    235.0                  32.0   172846
+          DoS Slowhttptest              80.0                 29200.0                     -1.0                  40.0     5228
+          DoS slowloris                 80.0                 29200.0                      0.0                  32.0     5385
+          Heartbleed                   444.0                   235.0                    235.0                  32.0       11

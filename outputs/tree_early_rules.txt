@@ -1,0 +1,48 @@
+# EARLY DecisionTree, max_depth=5, seed=46, leaves=16
+# class 1 = attack, class 0 = benign
+|--- Init_Win_bytes_forward <= 255.50
+|   |--- Init_Win_bytes_forward <= 250.50
+|   |   |--- Destination Port <= 64866.00
+|   |   |   |--- Init_Win_bytes_forward <= -0.50
+|   |   |   |   |--- class: 0
+|   |   |   |--- Init_Win_bytes_forward >  -0.50
+|   |   |   |   |--- Init_Win_bytes_forward <= 1.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- Init_Win_bytes_forward >  1.00
+|   |   |   |   |   |--- class: 0
+|   |   |--- Destination Port >  64866.00
+|   |   |   |--- Destination Port <= 64874.00
+|   |   |   |   |--- Destination Port <= 64869.50
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- Destination Port >  64869.50
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Destination Port >  64874.00
+|   |   |   |   |--- class: 0
+|   |--- Init_Win_bytes_forward >  250.50
+|   |   |--- Init_Win_bytes_forward <= 251.50
+|   |   |   |--- Destination Port <= 261.50
+|   |   |   |   |--- min_seg_size_forward <= 26.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- min_seg_size_forward >  26.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Destination Port >  261.50
+|   |   |   |   |--- class: 0
+|   |   |--- Init_Win_bytes_forward >  251.50
+|   |   |   |--- class: 0
+|--- Init_Win_bytes_forward >  255.50
+|   |--- Destination Port <= 84.00
+|   |   |--- Init_Win_bytes_backward <= 229.50
+|   |   |   |--- Init_Win_bytes_forward <= 12141.50
+|   |   |   |   |--- min_seg_size_forward <= 24.00
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- min_seg_size_forward >  24.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Init_Win_bytes_forward >  12141.50
+|   |   |   |   |--- Init_Win_bytes_backward <= 228.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- Init_Win_bytes_backward >  228.00
+|   |   |   |   |   |--- class: 1
+|   |   |--- Init_Win_bytes_backward >  229.50
+|   |   |   |--- class: 0
+|   |--- Destination Port >  84.00
+|   |   |--- class: 0

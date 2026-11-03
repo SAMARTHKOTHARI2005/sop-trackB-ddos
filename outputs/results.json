@@ -1,0 +1,249 @@
+{
+  "seed": 46,
+  "depth": 5,
+  "rf_trees": 100,
+  "features": {
+    "EARLY": [
+      "Destination Port",
+      "Init_Win_bytes_forward",
+      "Init_Win_bytes_backward",
+      "min_seg_size_forward"
+    ],
+    "EARLY_NO_PORT": [
+      "Init_Win_bytes_forward",
+      "Init_Win_bytes_backward",
+      "min_seg_size_forward"
+    ],
+    "COUNTER": [
+      "Total Fwd Packets",
+      "Total Backward Packets",
+      "Total Length of Fwd Packets",
+      "Fwd Packet Length Max",
+      "Flow Duration"
+    ],
+    "ALL": "78 features"
+  },
+  "rows": {
+    "friday_clean": 223082,
+    "wednesday_clean": 610492,
+    "friday_train": 156157,
+    "friday_test": 66925
+  },
+  "friday_test": {
+    "EARLY": {
+      "precision": 0.9896,
+      "recall": 0.9995,
+      "TP": 38386,
+      "FP": 405,
+      "FN": 18,
+      "TN": 28116,
+      "leaves": 16
+    },
+    "EARLY_NO_PORT": {
+      "precision": 0.9451,
+      "recall": 0.9995,
+      "TP": 38386,
+      "FP": 2228,
+      "FN": 18,
+      "TN": 26293,
+      "leaves": 15
+    },
+    "COUNTER": {
+      "precision": 0.9995,
+      "recall": 0.9986,
+      "TP": 38349,
+      "FP": 21,
+      "FN": 55,
+      "TN": 28500,
+      "leaves": 15
+    },
+    "ALL": {
+      "precision": 1.0,
+      "recall": 0.9999,
+      "TP": 38399,
+      "FP": 1,
+      "FN": 5,
+      "TN": 28520
+    }
+  },
+  "wednesday": {
+    "EARLY": {
+      "precision": 0.0855,
+      "recall": 0.0035,
+      "TP": 685,
+      "FP": 7330,
+      "FN": 193071,
+      "TN": 409406,
+      "fraction_flagged_per_label": {
+        "BENIGN": 0.0176,
+        "DoS GoldenEye": 0.0,
+        "DoS Hulk": 0.004,
+        "DoS Slowhttptest": 0.0,
+        "DoS slowloris": 0.0,
+        "Heartbleed": 0.0
+      }
+    },
+    "EARLY_NO_PORT": {
+      "precision": 0.0178,
+      "recall": 0.0035,
+      "TP": 685,
+      "FP": 37889,
+      "FN": 193071,
+      "TN": 378847,
+      "fraction_flagged_per_label": {
+        "BENIGN": 0.0909,
+        "DoS GoldenEye": 0.0,
+        "DoS Hulk": 0.004,
+        "DoS Slowhttptest": 0.0,
+        "DoS slowloris": 0.0,
+        "Heartbleed": 0.0
+      }
+    },
+    "COUNTER": {
+      "precision": 0.4603,
+      "recall": 0.0029,
+      "TP": 563,
+      "FP": 660,
+      "FN": 193193,
+      "TN": 416076,
+      "fraction_flagged_per_label": {
+        "BENIGN": 0.0016,
+        "DoS GoldenEye": 0.0,
+        "DoS Hulk": 0.0031,
+        "DoS Slowhttptest": 0.0063,
+        "DoS slowloris": 0.0,
+        "Heartbleed": 0.0
+      }
+    },
+    "ALL": {
+      "precision": 0.5073,
+      "recall": 0.0007,
+      "TP": 139,
+      "FP": 135,
+      "FN": 193617,
+      "TN": 416601,
+      "fraction_flagged_per_label": {
+        "BENIGN": 0.0003,
+        "DoS GoldenEye": 0.0,
+        "DoS Hulk": 0.0008,
+        "DoS Slowhttptest": 0.0002,
+        "DoS slowloris": 0.0,
+        "Heartbleed": 0.0
+      }
+    }
+  },
+  "importances": {
+    "EARLY": {
+      "Init_Win_bytes_forward": 0.5854,
+      "Destination Port": 0.331,
+      "Init_Win_bytes_backward": 0.0811,
+      "min_seg_size_forward": 0.0026
+    },
+    "EARLY_NO_PORT": {
+      "Init_Win_bytes_forward": 0.6403,
+      "Init_Win_bytes_backward": 0.2823,
+      "min_seg_size_forward": 0.0774
+    },
+    "COUNTER": {
+      "Fwd Packet Length Max": 0.5788,
+      "Total Length of Fwd Packets": 0.4191,
+      "Total Fwd Packets": 0.001,
+      "Flow Duration": 0.0006,
+      "Total Backward Packets": 0.0005
+    },
+    "ALL": {
+      "Total Length of Fwd Packets": 0.0822,
+      "Avg Fwd Segment Size": 0.0733,
+      "Fwd Packet Length Max": 0.0732,
+      "Fwd Packet Length Mean": 0.0728,
+      "Fwd IAT Std": 0.0575,
+      "Destination Port": 0.0566,
+      "Subflow Fwd Bytes": 0.053,
+      "Init_Win_bytes_forward": 0.0451,
+      "Total Fwd Packets": 0.0385,
+      "Fwd IAT Max": 0.038
+    }
+  },
+  "cv_early": {
+    "precision_mean": 0.9896,
+    "precision_std": 0.0004,
+    "recall_mean": 0.9998,
+    "recall_std": 0.0,
+    "precision_folds": [
+      0.9894,
+      0.9897,
+      0.9903,
+      0.9891,
+      0.9896
+    ],
+    "recall_folds": [
+      0.9999,
+      0.9998,
+      0.9998,
+      0.9998,
+      0.9998
+    ]
+  },
+  "early_false_positive_ports": {
+    "80": 390,
+    "21": 15
+  },
+  "median_early_features": {
+    "Friday|BENIGN": {
+      "Destination Port": 443.0,
+      "Init_Win_bytes_forward": 229.0,
+      "Init_Win_bytes_backward": 0.0,
+      "min_seg_size_forward": 20.0,
+      "n_flows": 95068.0
+    },
+    "Friday|DDoS": {
+      "Destination Port": 80.0,
+      "Init_Win_bytes_forward": 256.0,
+      "Init_Win_bytes_backward": 229.0,
+      "min_seg_size_forward": 20.0,
+      "n_flows": 128014.0
+    },
+    "Wednesday|BENIGN": {
+      "Destination Port": 80.0,
+      "Init_Win_bytes_forward": 63.0,
+      "Init_Win_bytes_backward": -1.0,
+      "min_seg_size_forward": 20.0,
+      "n_flows": 416736.0
+    },
+    "Wednesday|DoS GoldenEye": {
+      "Destination Port": 80.0,
+      "Init_Win_bytes_forward": 29200.0,
+      "Init_Win_bytes_backward": 235.0,
+      "min_seg_size_forward": 32.0,
+      "n_flows": 10286.0
+    },
+    "Wednesday|DoS Hulk": {
+      "Destination Port": 80.0,
+      "Init_Win_bytes_forward": 251.0,
+      "Init_Win_bytes_backward": 235.0,
+      "min_seg_size_forward": 32.0,
+      "n_flows": 172846.0
+    },
+    "Wednesday|DoS Slowhttptest": {
+      "Destination Port": 80.0,
+      "Init_Win_bytes_forward": 29200.0,
+      "Init_Win_bytes_backward": -1.0,
+      "min_seg_size_forward": 40.0,
+      "n_flows": 5228.0
+    },
+    "Wednesday|DoS slowloris": {
+      "Destination Port": 80.0,
+      "Init_Win_bytes_forward": 29200.0,
+      "Init_Win_bytes_backward": 0.0,
+      "min_seg_size_forward": 32.0,
+      "n_flows": 5385.0
+    },
+    "Wednesday|Heartbleed": {
+      "Destination Port": 444.0,
+      "Init_Win_bytes_forward": 235.0,
+      "Init_Win_bytes_backward": 235.0,
+      "min_seg_size_forward": 32.0,
+      "n_flows": 11.0
+    }
+  }
+}
