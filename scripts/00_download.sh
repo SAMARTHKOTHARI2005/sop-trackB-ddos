@@ -14,8 +14,8 @@ mkdir -p data
 
 BASE="https://media.githubusercontent.com/media/2000pawan/Cyber-Attack-Threat-Classification/main/MachineLearningCVE"
 FILES=(
-  "Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv"   # ~77 MB, DDoS (LOIC) + benign
-  "Wednesday-workingHours.pcap_ISCX.csv"               # ~225 MB, DoS Hulk/GoldenEye/slowloris/Slowhttptest/Heartbleed + benign
+  "Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv"   # ~74 MB, DDoS (LOIC) + benign
+  "Wednesday-workingHours.pcap_ISCX.csv"               # ~215 MB, DoS Hulk/GoldenEye/slowloris/Slowhttptest/Heartbleed + benign
 )
 
 # Expected SHA-256 prefixes (Friday's matches the Git LFS oid of the mirror).
@@ -47,10 +47,9 @@ if command -v sha256sum >/dev/null 2>&1; then SHA="sha256sum"; else SHA="shasum 
 echo "--- data/SHA256SUMS ---"
 cat data/SHA256SUMS
 
-# Verify (1) the checksum file round-trips and (2) each hash has the expected prefix.
-(cd data && $SHA -c SHA256SUMS)
+# Verify each hash against the expected prefix (SHA256SUMS lines are "<hash>  <file>").
 for f in "${FILES[@]}"; do
-  got=$(grep " \*\?$f\$" data/SHA256SUMS | cut -c1-16)
+  got=$(grep -F "  $f" data/SHA256SUMS | cut -c1-16)
   want=$(expected_prefix "$f")
   if [[ "$got" == "$want" ]]; then
     echo "[ok] $f sha256 prefix $got"

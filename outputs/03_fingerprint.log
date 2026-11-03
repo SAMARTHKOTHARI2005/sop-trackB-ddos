@@ -115,9 +115,7 @@ Init_Win_bytes_forward
 === single-rule detectors (attack = positive class) ===
 Friday    | Init_Win_fwd == 256 AND port == 80           | precision=0.9951 recall=0.5451  TP=69782 FP=344 FN=58232
 Friday    | Init_Win_fwd in {256, 8192} AND port == 80   | precision=0.9773 recall=0.9983  TP=127801 FP=2969 FN=213
-Friday    | Init_Win_fwd == 256                          | precision=0.9856 recall=0.5451  TP=69782 FP=1022 FN=58232
 Friday    | port == 80                                   | precision=0.9374 recall=1.0000  TP=128011 FP=8546 FN=3
 Wednesday | Init_Win_fwd == 256 AND port == 80           | precision=0.0000 recall=0.0000  TP=0 FP=1432 FN=193756
 Wednesday | Init_Win_fwd in {256, 8192} AND port == 80   | precision=0.0002 recall=0.0000  TP=3 FP=19463 FN=193753
-Wednesday | Init_Win_fwd == 256                          | precision=0.0000 recall=0.0000  TP=0 FP=3522 FN=193756
 Wednesday | port == 80                                   | precision=0.8082 recall=0.9999  TP=193745 FP=45979 FN=11

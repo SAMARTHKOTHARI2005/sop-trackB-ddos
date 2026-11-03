@@ -14,7 +14,6 @@ Default seed = 46 (last two digits of student ID 2023A7PS0646P).
 Usage:
   python scripts/02_train.py                       # depth 5, seed 46 -> outputs/
   python scripts/02_train.py --depth 3 --out outputs/depth3
-  python scripts/02_train.py --seed 7  --out outputs/seed7
 """
 import argparse
 import json
@@ -23,11 +22,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, precision_score, recall_score
 from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_text
 
-from common import DEFAULT_SEED, FRIDAY, OUTPUTS, WEDNESDAY, clean, load_csv
+from common import (DEFAULT_SEED, EARLY, FRIDAY, OUTPUTS, WEDNESDAY,
+                    clean, is_attack, load_csv, scores)
 
 # ---------------------------------------------------------------- arguments
 ap = argparse.ArgumentParser()
@@ -49,9 +48,12 @@ def log(*parts):
     log_lines.append(line)
 
 
+def tree():
+    """The shallow decision tree used for EARLY, EARLY_NO_PORT and COUNTER."""
+    return DecisionTreeClassifier(max_depth=args.depth, random_state=args.seed)
+
+
 # ---------------------------------------------------------------- features
-EARLY = ["Destination Port", "Init_Win_bytes_forward",
-         "Init_Win_bytes_backward", "min_seg_size_forward"]
 EARLY_NO_PORT = [f for f in EARLY if f != "Destination Port"]
 COUNTER = ["Total Fwd Packets", "Total Backward Packets",
            "Total Length of Fwd Packets", "Fwd Packet Length Max", "Flow Duration"]
@@ -64,9 +66,7 @@ wed = clean(load_csv(WEDNESDAY), "Wednesday", log)
 ALL = [c for c in fri.columns if c != "Label"]
 log(f"ALL feature count: {len(ALL)}")
 
-# y = 1 for any attack, 0 for benign
-y_fri = (fri["Label"] != "BENIGN").astype(int).values
-y_wed = (wed["Label"] != "BENIGN").astype(int).values
+y_fri, y_wed = is_attack(fri), is_attack(wed)
 log("Friday labels after cleaning:", fri["Label"].value_counts().to_dict())
 log("Wednesday labels after cleaning:", wed["Label"].value_counts().to_dict())
 
@@ -77,20 +77,12 @@ log(f"Friday split: train {len(idx_tr)}  test {len(idx_te)}")
 
 # ---------------------------------------------------------------- models
 MODELS = {
-    "EARLY": (EARLY, lambda: DecisionTreeClassifier(max_depth=args.depth, random_state=args.seed)),
-    "EARLY_NO_PORT": (EARLY_NO_PORT, lambda: DecisionTreeClassifier(max_depth=args.depth, random_state=args.seed)),
-    "COUNTER": (COUNTER, lambda: DecisionTreeClassifier(max_depth=args.depth, random_state=args.seed)),
-    "ALL": (ALL, lambda: RandomForestClassifier(n_estimators=args.trees, random_state=args.seed, n_jobs=-1)),
+    "EARLY": (EARLY, tree),
+    "EARLY_NO_PORT": (EARLY_NO_PORT, tree),
+    "COUNTER": (COUNTER, tree),
+    "ALL": (ALL, lambda: RandomForestClassifier(n_estimators=args.trees,
+                                                random_state=args.seed, n_jobs=-1)),
 }
-
-
-def scores(y_true, y_pred):
-    """precision / recall for the attack class (label 1) + confusion counts"""
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
-    return {"precision": round(float(precision_score(y_true, y_pred, zero_division=0)), 4),
-            "recall": round(float(recall_score(y_true, y_pred, zero_division=0)), 4),
-            "TP": int(tp), "FP": int(fp), "FN": int(fn), "TN": int(tn)}
-
 
 results = {"seed": args.seed, "depth": args.depth, "rf_trees": args.trees,
            "features": {"EARLY": EARLY, "EARLY_NO_PORT": EARLY_NO_PORT, "COUNTER": COUNTER,
@@ -110,43 +102,42 @@ for name, (feats, make) in MODELS.items():
     results["friday_test"][name] = r
     log(f"{name:14s} " + "  ".join(f"{k}={v}" for k, v in r.items()))
 
-# feature importances for every model
+# feature importances for every model (top 10)
 log("\n=== feature importances ===")
 results["importances"] = {}
 for name, (feats, _) in MODELS.items():
-    imp = pd.Series(fitted[name].feature_importances_, index=feats).sort_values(ascending=False)
-    results["importances"][name] = {k: round(float(v), 4) for k, v in imp.head(10).items()}
-    log(f"[{name}] " + ", ".join(f"{k}={v:.4f}" for k, v in imp.head(10).items()))
+    imp = pd.Series(fitted[name].feature_importances_, index=feats)
+    imp = imp.sort_values(ascending=False).head(10)
+    results["importances"][name] = {k: round(float(v), 4) for k, v in imp.items()}
+    log(f"[{name}] " + ", ".join(f"{k}={v:.4f}" for k, v in imp.items()))
 
 # 5-fold stratified CV on the EARLY tree (whole cleaned Friday)
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=args.seed)
-cvr = cross_validate(DecisionTreeClassifier(max_depth=args.depth, random_state=args.seed),
-                     fri[EARLY], y_fri, cv=cv, scoring=["precision", "recall"])
+cvr = cross_validate(tree(), fri[EARLY], y_fri, cv=cv, scoring=["precision", "recall"])
+cv_p, cv_r = cvr["test_precision"], cvr["test_recall"]
 results["cv_early"] = {
-    "precision_mean": round(float(cvr["test_precision"].mean()), 4),
-    "precision_std": round(float(cvr["test_precision"].std()), 4),
-    "recall_mean": round(float(cvr["test_recall"].mean()), 4),
-    "recall_std": round(float(cvr["test_recall"].std()), 4),
-    "precision_folds": [round(float(v), 4) for v in cvr["test_precision"]],
-    "recall_folds": [round(float(v), 4) for v in cvr["test_recall"]],
+    "precision_mean": round(float(cv_p.mean()), 4), "precision_std": round(float(cv_p.std()), 4),
+    "recall_mean": round(float(cv_r.mean()), 4), "recall_std": round(float(cv_r.std()), 4),
+    "precision_folds": [round(float(v), 4) for v in cv_p],
+    "recall_folds": [round(float(v), 4) for v in cv_r],
 }
 log("\n=== 5-fold stratified CV, EARLY tree, Friday ===")
 log(json.dumps(results["cv_early"]))
 
 # EARLY tree rules (this is what would become switch match-action entries)
 early = fitted["EARLY"]
-rules = export_text(early, feature_names=EARLY, max_depth=args.depth)
 (out / "tree_early_rules.txt").write_text(
     f"# EARLY DecisionTree, max_depth={args.depth}, seed={args.seed}, "
-    f"leaves={early.get_n_leaves()}\n# class 1 = attack, class 0 = benign\n" + rules)
+    f"leaves={early.get_n_leaves()}\n# class 1 = attack, class 0 = benign\n"
+    + export_text(early, feature_names=EARLY, max_depth=args.depth))
 
 # false positives of the EARLY tree on the Friday test set: which ports?
 te = fri.loc[idx_te]
 fp_mask = (early.predict(te[EARLY]) == 1) & (y_fri[idx_te] == 0)
-fp_ports = te.loc[fp_mask, "Destination Port"].value_counts()
-results["early_false_positive_ports"] = {str(k): int(v) for k, v in fp_ports.head(15).items()}
+fp_ports = te.loc[fp_mask, "Destination Port"].value_counts().head(15)
+results["early_false_positive_ports"] = {str(k): int(v) for k, v in fp_ports.items()}
 log(f"\n=== EARLY false positives on Friday test: {int(fp_mask.sum())} flows, top destination ports ===")
-log(fp_ports.head(15).to_string())
+log(fp_ports.to_string())
 
 # ---------------------------------------------------------------- failure case
 # Apply the Friday-trained models unchanged to Wednesday (different DoS tools).
@@ -163,10 +154,9 @@ for name, (feats, _) in MODELS.items():
         ", ".join(f"{k}={v:.4f}" for k, v in r["fraction_flagged_per_label"].items()))
 
 # median EARLY feature values per (day, label): why does it fail?
-med = pd.concat([fri.assign(Day="Friday"), wed.assign(Day="Wednesday")])
-med = med.groupby(["Day", "Label"])[EARLY].median()
-med["n_flows"] = pd.concat([fri.assign(Day="Friday"), wed.assign(Day="Wednesday")]) \
-    .groupby(["Day", "Label"]).size()
+groups = pd.concat([fri.assign(Day="Friday"), wed.assign(Day="Wednesday")]).groupby(["Day", "Label"])
+med = groups[EARLY].median()
+med["n_flows"] = groups.size()
 results["median_early_features"] = {f"{d}|{l}": {k: float(v) for k, v in row.items()}
                                     for (d, l), row in med.iterrows()}
 log("\n=== median EARLY feature values per (day, label) ===")

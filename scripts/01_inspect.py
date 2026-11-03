@@ -1,7 +1,8 @@
 """Step 2: look at the raw data before training anything.
 
 Prints, for both CSVs: shape, label counts, the (stripped) column list,
-and how many rows contain NaN or +/-inf values.
+how many rows contain NaN or +/-inf values, and how many rows are exact
+duplicates.
 
 Usage:  python scripts/01_inspect.py | tee outputs/01_inspect.log
 """
