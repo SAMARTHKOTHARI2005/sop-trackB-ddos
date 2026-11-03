@@ -1,0 +1,112 @@
+[clean Friday] rows in: 225745  dropped NaN/inf: 34  dropped duplicates: 2629  rows out: 223082
+[clean Wednesday] rows in: 692703  dropped NaN/inf: 1297  dropped duplicates: 80914  rows out: 610492
+
+EARLY tree, depth 5
+seed |  Fri P  Fri R |  Wed P  Wed R |        Hulk   GoldenEye   slowloris Slowhttptest | leaves
+  46 | 0.9896 0.9995 | 0.0855 0.0035 |      0.0040      0.0000      0.0000      0.0000 | 16
+  74 | 0.9894 0.9998 | 0.9374 0.5724 |      0.6417      0.0000      0.0000      0.0000 | 15
+   0 | 0.9897 0.9998 | 0.8900 0.3075 |      0.3447      0.0000      0.0000      0.0000 | 15
+   1 | 0.9899 0.9999 | 0.9374 0.5724 |      0.6417      0.0000      0.0000      0.0000 | 15
+   2 | 0.9898 0.9999 | 0.8902 0.3075 |      0.3447      0.0000      0.0000      0.0000 | 15
+   3 | 0.9896 0.9999 | 0.8902 0.3075 |      0.3447      0.0000      0.0000      0.0000 | 15
+   4 | 0.9895 0.9999 | 0.8900 0.3075 |      0.3447      0.0000      0.0000      0.0000 | 15
+   5 | 0.9904 0.9997 | 0.9374 0.5724 |      0.6417      0.0000      0.0000      0.0000 | 15
+   6 | 0.9898 0.9998 | 0.9375 0.5724 |      0.6417      0.0000      0.0000      0.0000 | 15
+   7 | 0.9893 0.9998 | 0.8902 0.3075 |      0.3447      0.0000      0.0000      0.0000 | 15
+   8 | 0.9905 0.9998 | 0.8900 0.3075 |      0.3447      0.0000      0.0000      0.0000 | 15
+   9 | 0.9900 0.9999 | 0.8902 0.3075 |      0.3447      0.0000      0.0000      0.0000 | 15
+
+=== EARLY tree rules, seed 46 ===
+|--- Init_Win_bytes_forward <= 255.50
+|   |--- Init_Win_bytes_forward <= 250.50
+|   |   |--- Destination Port <= 64866.00
+|   |   |   |--- Init_Win_bytes_forward <= -0.50
+|   |   |   |   |--- class: 0
+|   |   |   |--- Init_Win_bytes_forward >  -0.50
+|   |   |   |   |--- Init_Win_bytes_forward <= 1.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- Init_Win_bytes_forward >  1.00
+|   |   |   |   |   |--- class: 0
+|   |   |--- Destination Port >  64866.00
+|   |   |   |--- Destination Port <= 64874.00
+|   |   |   |   |--- Destination Port <= 64869.50
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- Destination Port >  64869.50
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Destination Port >  64874.00
+|   |   |   |   |--- class: 0
+|   |--- Init_Win_bytes_forward >  250.50
+|   |   |--- Init_Win_bytes_forward <= 251.50
+|   |   |   |--- Destination Port <= 261.50
+|   |   |   |   |--- min_seg_size_forward <= 26.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- min_seg_size_forward >  26.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Destination Port >  261.50
+|   |   |   |   |--- class: 0
+|   |   |--- Init_Win_bytes_forward >  251.50
+|   |   |   |--- class: 0
+|--- Init_Win_bytes_forward >  255.50
+|   |--- Destination Port <= 84.00
+|   |   |--- Init_Win_bytes_backward <= 229.50
+|   |   |   |--- Init_Win_bytes_forward <= 12141.50
+|   |   |   |   |--- min_seg_size_forward <= 24.00
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- min_seg_size_forward >  24.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Init_Win_bytes_forward >  12141.50
+|   |   |   |   |--- Init_Win_bytes_backward <= 228.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- Init_Win_bytes_backward >  228.00
+|   |   |   |   |   |--- class: 1
+|   |   |--- Init_Win_bytes_backward >  229.50
+|   |   |   |--- class: 0
+|   |--- Destination Port >  84.00
+|   |   |--- class: 0
+
+
+=== EARLY tree rules, seed 74 ===
+|--- Init_Win_bytes_forward <= 255.50
+|   |--- Init_Win_bytes_forward <= 250.50
+|   |   |--- Init_Win_bytes_forward <= -0.50
+|   |   |   |--- class: 0
+|   |   |--- Init_Win_bytes_forward >  -0.50
+|   |   |   |--- Init_Win_bytes_forward <= 1.00
+|   |   |   |   |--- Destination Port <= 261.50
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- Destination Port >  261.50
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Init_Win_bytes_forward >  1.00
+|   |   |   |   |--- Destination Port <= 64872.50
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- Destination Port >  64872.50
+|   |   |   |   |   |--- class: 0
+|   |--- Init_Win_bytes_forward >  250.50
+|   |   |--- Init_Win_bytes_forward <= 251.50
+|   |   |   |--- Destination Port <= 84.00
+|   |   |   |   |--- Init_Win_bytes_backward <= 228.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- Init_Win_bytes_backward >  228.00
+|   |   |   |   |   |--- class: 1
+|   |   |   |--- Destination Port >  84.00
+|   |   |   |   |--- class: 0
+|   |   |--- Init_Win_bytes_forward >  251.50
+|   |   |   |--- class: 0
+|--- Init_Win_bytes_forward >  255.50
+|   |--- Destination Port <= 84.00
+|   |   |--- Init_Win_bytes_backward <= 230.00
+|   |   |   |--- Init_Win_bytes_forward <= 12180.50
+|   |   |   |   |--- min_seg_size_forward <= 26.00
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- min_seg_size_forward >  26.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- Init_Win_bytes_forward >  12180.50
+|   |   |   |   |--- Init_Win_bytes_backward <= 228.00
+|   |   |   |   |   |--- class: 0
+|   |   |   |   |--- Init_Win_bytes_backward >  228.00
+|   |   |   |   |   |--- class: 1
+|   |   |--- Init_Win_bytes_backward >  230.00
+|   |   |   |--- class: 0
+|   |--- Destination Port >  84.00
+|   |   |--- class: 0
+
