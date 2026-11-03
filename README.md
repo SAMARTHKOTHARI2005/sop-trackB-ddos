@@ -524,8 +524,8 @@ All the numbers in the reports are taken from the files in `outputs/`.
 ## 4. How this was built
 
 The task, the overall plan (dataset mirror, the two files, the four feature sets, the decision
-tree, the steps) and the seed were from my own brief. I used Claude Code to write and run the
-scripts, make the commits, and draft the documents. A few things were added while doing it:
+tree, the steps) and the seed were from my own brief. I used Claude Code for all the coding,
+most of the analysis, the commits and drafting the documents. A few things were added while doing it:
 
 - fixes for bash 3.2 and the Python environment
 - the second fingerprint rule (window 256 or 8192)

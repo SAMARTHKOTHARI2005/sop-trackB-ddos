@@ -61,8 +61,7 @@ most 32 entries.
 
 The EARLY tree gets precision 0.9896 and recall 0.9995 with 16 leaves. 5-fold CV gives
 precision 0.9896 ± 0.0004 and recall 0.9998, so it is not a lucky split. Without the port the
-false positives go up from 405 to 2,228, and almost all of the EARLY false positives (390 of
-405) are benign web flows to port 80.
+false positives go up from 405 to 2,228.
 
 These numbers looked too good, so I checked what the tree was actually using.
 Init_Win_bytes_forward has an importance of 0.585 and the port 0.331. On Friday the DDoS flows
@@ -118,4 +117,6 @@ at packet 1-3 cannot catch it; a switch would need per-source state and timers.
 - CIC-IDS2017 has known labelling and CICFlowMeter issues (NaN/inf rows, 2,629 + 80,914
   duplicates, a duplicated Fwd Header Length column).
 
-Code, logs and exact commands: github.com/SAMARTHKOTHARI2005/sop-trackB-ddos
+Code, logs and exact commands: github.com/SAMARTHKOTHARI2005/sop-trackB-ddos. AI use: I used
+Claude (claude.ai, Claude Code) for planning, coding, parts of the analysis and drafting this
+report; details in report/AI_USE.md.
