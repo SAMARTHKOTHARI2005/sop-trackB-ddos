@@ -1,18 +1,19 @@
-"""Step 3: train attack-vs-benign classifiers on Friday (DDoS) and test them
-on a held-out Friday split AND on a different day (Wednesday, DoS attacks).
+"""Step 3: train attack-vs-benign classifiers on Friday (DDoS), test them on a
+held-out part of Friday, and then on a completely different day (Wednesday,
+different DoS tools) to find where they fail.
 
-Feature sets (see README / report for the reasoning):
+Feature sets (the report explains why):
   EARLY          header fields fixed by the first 1-3 packets (SYN / SYN-ACK)
-  EARLY_NO_PORT  EARLY without Destination Port (ablation)
-  COUNTER        per-flow counters a switch could keep in registers; in this
-                 CSV they are computed over the WHOLE flow -> optimistic bound
-  ALL            all 78 CICFlowMeter features, RandomForest, reference ceiling
+  EARLY_NO_PORT  EARLY without Destination Port, to see how much the port matters
+  COUNTER        per-flow counters a switch could keep in registers; in this CSV
+                 they cover the WHOLE flow, so this is an optimistic upper bound
+  ALL            all 78 CICFlowMeter features in a random forest, only as a ceiling
 
-Every source of randomness (train/test split, CV folds, trees) uses --seed.
-Default seed = 46 (last two digits of student ID 2023A7PS0646P).
+Everything random (train/test split, CV folds, trees) uses --seed, which
+defaults to 46 (last two digits of my ID, 2023A7PS0646P).
 
 Usage:
-  python scripts/02_train.py                       # depth 5, seed 46 -> outputs/
+  python scripts/02_train.py                       # depth 5, seed 46, writes to outputs/
   python scripts/02_train.py --depth 3 --out outputs/depth3
 """
 import argparse
@@ -28,21 +29,20 @@ from sklearn.tree import DecisionTreeClassifier, export_text
 from common import (DEFAULT_SEED, EARLY, FRIDAY, OUTPUTS, WEDNESDAY,
                     clean, is_attack, load_csv, scores)
 
-# ---------------------------------------------------------------- arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("--depth", type=int, default=5, help="max depth of the decision trees")
-ap.add_argument("--seed", type=int, default=DEFAULT_SEED, help="random seed (default 46)")
-ap.add_argument("--trees", type=int, default=100, help="trees in the ALL random forest")
-ap.add_argument("--out", default=str(OUTPUTS), help="output folder for logs/results")
-args = ap.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("--depth", type=int, default=5, help="max depth of the decision trees")
+parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="random seed (default 46)")
+parser.add_argument("--trees", type=int, default=100, help="number of trees in the ALL random forest")
+parser.add_argument("--out", default=str(OUTPUTS), help="folder to write the logs and results to")
+args = parser.parse_args()
 
-out = Path(args.out)
-out.mkdir(parents=True, exist_ok=True)
+out_dir = Path(args.out)
+out_dir.mkdir(parents=True, exist_ok=True)
 log_lines = []
 
 
 def log(*parts):
-    """print() that also keeps a copy for outputs/02_train.log"""
+    """Like print(), but also keeps the line so it can be saved to 02_train.log."""
     line = " ".join(str(p) for p in parts)
     print(line)
     log_lines.append(line)
@@ -53,30 +53,30 @@ def tree():
     return DecisionTreeClassifier(max_depth=args.depth, random_state=args.seed)
 
 
-# ---------------------------------------------------------------- features
-EARLY_NO_PORT = [f for f in EARLY if f != "Destination Port"]
+EARLY_NO_PORT = [col for col in EARLY if col != "Destination Port"]
 COUNTER = ["Total Fwd Packets", "Total Backward Packets",
            "Total Length of Fwd Packets", "Fwd Packet Length Max", "Flow Duration"]
 
 log(f"seed = {args.seed}   tree depth = {args.depth}   RF trees = {args.trees}")
 
-# ---------------------------------------------------------------- load + clean
-fri = clean(load_csv(FRIDAY), "Friday", log)
-wed = clean(load_csv(WEDNESDAY), "Wednesday", log)
-ALL = [c for c in fri.columns if c != "Label"]
+# Load and clean both days
+friday = clean(load_csv(FRIDAY), "Friday", log)
+wednesday = clean(load_csv(WEDNESDAY), "Wednesday", log)
+ALL = [col for col in friday.columns if col != "Label"]
 log(f"ALL feature count: {len(ALL)}")
 
-y_fri, y_wed = is_attack(fri), is_attack(wed)
-log("Friday labels after cleaning:", fri["Label"].value_counts().to_dict())
-log("Wednesday labels after cleaning:", wed["Label"].value_counts().to_dict())
+y_friday = is_attack(friday)
+y_wednesday = is_attack(wednesday)
+log("Friday labels after cleaning:", friday["Label"].value_counts().to_dict())
+log("Wednesday labels after cleaning:", wednesday["Label"].value_counts().to_dict())
 
-# stratified 70/30 split on Friday (indices, so every model sees the same rows)
-idx_tr, idx_te = train_test_split(np.arange(len(fri)), test_size=0.30,
-                                  stratify=y_fri, random_state=args.seed)
-log(f"Friday split: train {len(idx_tr)}  test {len(idx_te)}")
+# Stratified 70/30 split of Friday. Split the row numbers, so every model
+# is trained and tested on exactly the same rows.
+train_idx, test_idx = train_test_split(np.arange(len(friday)), test_size=0.30,
+                                       stratify=y_friday, random_state=args.seed)
+log(f"Friday split: train {len(train_idx)}  test {len(test_idx)}")
 
-# ---------------------------------------------------------------- models
-MODELS = {
+models = {
     "EARLY": (EARLY, tree),
     "EARLY_NO_PORT": (EARLY_NO_PORT, tree),
     "COUNTER": (COUNTER, tree),
@@ -87,82 +87,87 @@ MODELS = {
 results = {"seed": args.seed, "depth": args.depth, "rf_trees": args.trees,
            "features": {"EARLY": EARLY, "EARLY_NO_PORT": EARLY_NO_PORT, "COUNTER": COUNTER,
                         "ALL": f"{len(ALL)} features"},
-           "rows": {"friday_clean": len(fri), "wednesday_clean": len(wed),
-                    "friday_train": len(idx_tr), "friday_test": len(idx_te)},
+           "rows": {"friday_clean": len(friday), "wednesday_clean": len(wednesday),
+                    "friday_train": len(train_idx), "friday_test": len(test_idx)},
            "friday_test": {}, "wednesday": {}}
-fitted = {}
+trained = {}
 
+# Train on Friday's 70% and score on the other 30%
 log("\n=== Friday held-out test (30%), attack class ===")
-for name, (feats, make) in MODELS.items():
-    model = make().fit(fri.loc[idx_tr, feats], y_fri[idx_tr])
-    fitted[name] = model
-    r = scores(y_fri[idx_te], model.predict(fri.loc[idx_te, feats]))
+for name, (features, make_model) in models.items():
+    model = make_model().fit(friday.loc[train_idx, features], y_friday[train_idx])
+    trained[name] = model
+    result = scores(y_friday[test_idx], model.predict(friday.loc[test_idx, features]))
     if isinstance(model, DecisionTreeClassifier):
-        r["leaves"] = int(model.get_n_leaves())
-    results["friday_test"][name] = r
-    log(f"{name:14s} " + "  ".join(f"{k}={v}" for k, v in r.items()))
+        result["leaves"] = int(model.get_n_leaves())
+    results["friday_test"][name] = result
+    log(f"{name:14s} " + "  ".join(f"{k}={v}" for k, v in result.items()))
 
-# feature importances for every model (top 10)
+# Which features each model relies on (top 10)
 log("\n=== feature importances ===")
 results["importances"] = {}
-for name, (feats, _) in MODELS.items():
-    imp = pd.Series(fitted[name].feature_importances_, index=feats)
-    imp = imp.sort_values(ascending=False).head(10)
-    results["importances"][name] = {k: round(float(v), 4) for k, v in imp.items()}
-    log(f"[{name}] " + ", ".join(f"{k}={v:.4f}" for k, v in imp.items()))
+for name, (features, _) in models.items():
+    importances = pd.Series(trained[name].feature_importances_, index=features)
+    importances = importances.sort_values(ascending=False).head(10)
+    results["importances"][name] = {k: round(float(v), 4) for k, v in importances.items()}
+    log(f"[{name}] " + ", ".join(f"{k}={v:.4f}" for k, v in importances.items()))
 
-# 5-fold stratified CV on the EARLY tree (whole cleaned Friday)
-cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=args.seed)
-cvr = cross_validate(tree(), fri[EARLY], y_fri, cv=cv, scoring=["precision", "recall"])
-cv_p, cv_r = cvr["test_precision"], cvr["test_recall"]
+# 5-fold stratified cross-validation of the EARLY tree on all of Friday
+folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=args.seed)
+cv_results = cross_validate(tree(), friday[EARLY], y_friday, cv=folds,
+                            scoring=["precision", "recall"])
+cv_precision = cv_results["test_precision"]
+cv_recall = cv_results["test_recall"]
 results["cv_early"] = {
-    "precision_mean": round(float(cv_p.mean()), 4), "precision_std": round(float(cv_p.std()), 4),
-    "recall_mean": round(float(cv_r.mean()), 4), "recall_std": round(float(cv_r.std()), 4),
-    "precision_folds": [round(float(v), 4) for v in cv_p],
-    "recall_folds": [round(float(v), 4) for v in cv_r],
+    "precision_mean": round(float(cv_precision.mean()), 4),
+    "precision_std": round(float(cv_precision.std()), 4),
+    "recall_mean": round(float(cv_recall.mean()), 4),
+    "recall_std": round(float(cv_recall.std()), 4),
+    "precision_folds": [round(float(v), 4) for v in cv_precision],
+    "recall_folds": [round(float(v), 4) for v in cv_recall],
 }
 log("\n=== 5-fold stratified CV, EARLY tree, Friday ===")
 log(json.dumps(results["cv_early"]))
 
-# EARLY tree rules (this is what would become switch match-action entries)
-early = fitted["EARLY"]
-(out / "tree_early_rules.txt").write_text(
+# Save the EARLY tree as if/else rules (these would become switch table entries)
+early_tree = trained["EARLY"]
+(out_dir / "tree_early_rules.txt").write_text(
     f"# EARLY DecisionTree, max_depth={args.depth}, seed={args.seed}, "
-    f"leaves={early.get_n_leaves()}\n# class 1 = attack, class 0 = benign\n"
-    + export_text(early, feature_names=EARLY, max_depth=args.depth))
+    f"leaves={early_tree.get_n_leaves()}\n# class 1 = attack, class 0 = benign\n"
+    + export_text(early_tree, feature_names=EARLY, max_depth=args.depth))
 
-# false positives of the EARLY tree on the Friday test set: which ports?
-te = fri.loc[idx_te]
-fp_mask = (early.predict(te[EARLY]) == 1) & (y_fri[idx_te] == 0)
-fp_ports = te.loc[fp_mask, "Destination Port"].value_counts().head(15)
-results["early_false_positive_ports"] = {str(k): int(v) for k, v in fp_ports.items()}
-log(f"\n=== EARLY false positives on Friday test: {int(fp_mask.sum())} flows, top destination ports ===")
-log(fp_ports.to_string())
+# Which ports do the EARLY tree's false alarms on the Friday test set go to?
+test_rows = friday.loc[test_idx]
+false_alarm = (early_tree.predict(test_rows[EARLY]) == 1) & (y_friday[test_idx] == 0)
+false_alarm_ports = test_rows.loc[false_alarm, "Destination Port"].value_counts().head(15)
+results["early_false_positive_ports"] = {str(port): int(n) for port, n in false_alarm_ports.items()}
+log(f"\n=== EARLY false positives on Friday test: {int(false_alarm.sum())} flows, top destination ports ===")
+log(false_alarm_ports.to_string())
 
-# ---------------------------------------------------------------- failure case
-# Apply the Friday-trained models unchanged to Wednesday (different DoS tools).
+# Failure case: run the Friday-trained models, unchanged, on Wednesday
 log("\n=== Cross-day: Friday-trained models on Wednesday (all rows) ===")
-for name, (feats, _) in MODELS.items():
-    pred = fitted[name].predict(wed[feats])
-    r = scores(y_wed, pred)
-    flagged = pd.Series(pred).groupby(wed["Label"].values).mean()
-    r["fraction_flagged_per_label"] = {k: round(float(v), 4) for k, v in flagged.items()}
-    results["wednesday"][name] = r
-    log(f"{name:14s} precision={r['precision']} recall={r['recall']} "
-        f"TP={r['TP']} FP={r['FP']} FN={r['FN']} TN={r['TN']}")
+for name, (features, _) in models.items():
+    predictions = trained[name].predict(wednesday[features])
+    result = scores(y_wednesday, predictions)
+    share_flagged = pd.Series(predictions).groupby(wednesday["Label"].values).mean()
+    result["fraction_flagged_per_label"] = {label: round(float(v), 4) for label, v in share_flagged.items()}
+    results["wednesday"][name] = result
+    log(f"{name:14s} precision={result['precision']} recall={result['recall']} "
+        f"TP={result['TP']} FP={result['FP']} FN={result['FN']} TN={result['TN']}")
     log("    fraction flagged as attack per label: " +
-        ", ".join(f"{k}={v:.4f}" for k, v in r["fraction_flagged_per_label"].items()))
+        ", ".join(f"{label}={v:.4f}" for label, v in result["fraction_flagged_per_label"].items()))
 
-# median EARLY feature values per (day, label): why does it fail?
-groups = pd.concat([fri.assign(Day="Friday"), wed.assign(Day="Wednesday")]).groupby(["Day", "Label"])
-med = groups[EARLY].median()
-med["n_flows"] = groups.size()
-results["median_early_features"] = {f"{d}|{l}": {k: float(v) for k, v in row.items()}
-                                    for (d, l), row in med.iterrows()}
+# Median EARLY values per day and label, to see why it fails
+both_days = pd.concat([friday.assign(Day="Friday"), wednesday.assign(Day="Wednesday")])
+by_day_label = both_days.groupby(["Day", "Label"])
+medians = by_day_label[EARLY].median()
+medians["n_flows"] = by_day_label.size()
+results["median_early_features"] = {f"{day}|{label}": {k: float(v) for k, v in row.items()}
+                                    for (day, label), row in medians.iterrows()}
 log("\n=== median EARLY feature values per (day, label) ===")
-log(med.to_string())
+log(medians.to_string())
 
-# ---------------------------------------------------------------- save
-(out / "results.json").write_text(json.dumps(results, indent=2))
-(out / "02_train.log").write_text("\n".join(log_lines) + "\n")
-log(f"\nwrote {out/'results.json'}, {out/'02_train.log'}, {out/'tree_early_rules.txt'}")
+# Save everything
+(out_dir / "results.json").write_text(json.dumps(results, indent=2))
+(out_dir / "02_train.log").write_text("\n".join(log_lines) + "\n")
+log(f"\nwrote {out_dir/'results.json'}, {out_dir/'02_train.log'}, {out_dir/'tree_early_rules.txt'}")
