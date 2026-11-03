@@ -24,14 +24,39 @@ helped me plan the approach: which two CIC-IDS2017 days to use, which fields cou
 
 ## What I did
 
-- Wrote the task brief that the code follows (planned with claude.ai as above). It fixed the
-  dataset mirror and the two days, the four feature sets, the depth-5 decision tree, the
-  metrics, the order of the steps, seed 46 and the list of deliverables.
-- Made the decisions along the way, e.g. that seed 46 is the only seed for every reported result
-  and that other seeds are used only as a robustness check.
+**Planning and design**
+
+- Chose Track B and wrote the task brief that the code follows (planned with claude.ai, as above).
+  It fixed the dataset mirror (including that the `media.githubusercontent.com` link has to be
+  used instead of `raw.githubusercontent.com`), the two days, the four feature sets and what each
+  one is for, the depth-5 decision tree (because a shallow tree maps onto switch match-action
+  tables), precision/recall as the metrics, the Friday-to-Wednesday test for the failure case,
+  seed 46, and the list of deliverables.
+- Listed the data problems the notes had to cover (CIC server unreachable, LFS pointer files,
+  spaces in column names, NaN/inf rows, duplicate rows).
+- Chose the week-2 direction, including the link to my earlier ResilientDAG work on slow,
+  low-rate attacks that look valid locally but break liveness globally.
+
+**Running the project**
+
+- Set up the GitHub repository and asked for a commit after every step so the history shows
+  how the work progressed.
+- Checked the work against the professor's requirements one at a time (commit history, raw
+  logs, exact commands, the stuck notes, the week-2 paragraph, AI disclosure, the seed) and asked
+  for whatever was missing to be added.
+- Made the decisions along the way: seed 46 is the only seed for every reported result, other
+  seeds are only a robustness check, and the report must be exactly two pages.
+- Asked for the clean-up passes: removing unneeded code, clearer variable names, a single
+  `run_all.sh`, pinned library versions, and printing every result as a table so the logs are
+  easier to read and check.
+- Made some small formatting edits to `02_train.py` myself.
+
+**Understanding and checking it**
+
 - Asked for a walkthrough of every step and went through it so that I understand each choice
-  and can explain it, and re-ran the pipeline myself (`bash run_all.sh`, or `02_train.py` with a
-  different `--depth` or `--seed`).
+  and can explain it.
+- Read the README and report drafts and asked for them to be rewritten in my own style.
+- Re-ran the pipeline myself (`bash run_all.sh`) and tried a live change (`02_train.py --depth 3`).
 
 ## Seed
 

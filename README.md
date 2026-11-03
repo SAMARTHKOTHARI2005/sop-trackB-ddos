@@ -527,8 +527,13 @@ All the numbers in the reports are taken from the files in `outputs/`.
 ## 4. How this was built
 
 The task, the overall plan (dataset mirror, the two files, the four feature sets, the decision
-tree, the steps) and the seed were from my own brief. I used Claude Code for all the coding,
-most of the analysis, the commits and drafting the documents. A few things were added while doing it:
+tree, the steps), the seed and the week-2 direction were from my own brief. I also set up the
+repo, made the decisions along the way (seed 46 only, other seeds just as a robustness check),
+checked everything against the professor's requirements, asked for the clean-up and table
+formatting, and re-ran the pipeline myself.
+
+I used Claude Code for all the coding, most of the analysis, the commits and drafting the
+documents. A few things it added while doing it:
 
 - fixes for bash 3.2 and the Python environment
 - the second fingerprint rule (window 256 or 8192)
