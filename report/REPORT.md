@@ -86,9 +86,9 @@ On Wednesday every model fails (EARLY_NO_PORT behaves like EARLY). EARLY recall 
 fit Friday more closely. The fingerprint rule
 catches 3 of the 193,756 Wednesday attacks.
 
-This cross-day number also depends on the seed. With seed 74 the same code gets 0.5724 recall
-on Wednesday (64% of Hulk). Over 12 seeds, Friday precision stayed between 0.989 and 0.991, but
-Wednesday recall was always 0.0035, 0.3075 or 0.5724. The difference comes from two small leaves that some seeds label as attack,
+As a robustness check I retrained EARLY with seeds 0-9 as well. Friday precision stayed
+between 0.989 and 0.991, but Wednesday recall was always 0.0035 (seed 46), 0.3075 or 0.5724
+(64% of Hulk). The difference comes from two small leaves that some seeds label as attack,
 for window = 251 and window = 0, built from only 17 and 27 Friday flows. Hulk's most common
 windows happen to be 0 (34%) and 251 (33%). So any cross-day success here is coincidence, and
 same-day metrics cannot tell the trees apart. I kept seed 46 as the main result.

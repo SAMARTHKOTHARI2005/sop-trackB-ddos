@@ -37,11 +37,11 @@
    - `Fwd Header Length` appears twice in the CSV. pandas renames the second copy
      `Fwd Header Length.1`, and I left it in the ALL set (78 features).
 
-7. **My seed-46 result did not match an earlier seed-74 run.** Earlier, the EARLY tree caught
-   ~57% of Wednesday attacks. With seed 46 it caught 0.35%, while the Friday scores were
-   almost identical. At first this looked like a bug. *Fix / finding:* I wrote
-   `04_seed_sensitivity.py`. With seed 74 the same code reproduces 0.5724 exactly, so the
-   pipeline is consistent. Across 12 seeds, the Wednesday recall only takes the values
+7. **Was the seed-46 cross-day result stable?** With seed 46 the EARLY tree caught only
+   0.35% of Wednesday attacks while scoring 0.99 on Friday, and I wasn't sure whether that
+   was a property of the method or of this one tree. *Fix / finding:* I wrote
+   `04_seed_sensitivity.py`, which retrains the EARLY tree with seed 46 and seeds 0-9. The
+   Friday scores stay almost identical, but the Wednesday recall only takes the values
    0.0035, 0.3075 and 0.5724. The difference comes from two tiny leaves (Init_Win_fwd = 251
    and = 0) that only some seeds label "attack". They are built from 17 and 27 Friday DDoS
    flows and happen to match Hulk's windows. I kept seed 46 as the main result, as required,

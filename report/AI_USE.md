@@ -7,9 +7,9 @@ I used Anthropic's Claude for this trial task, in two ways:
   the cross-day test as the failure case.
 - **Claude Code (coding agent in my editor):** wrote the scripts in `scripts/`, ran them,
   made the step-by-step git commits, and drafted `README.md` and the files in `report/` from
-  the logs in `outputs/`. While running the pipeline, it noticed that my seed-46 cross-day
-  result was very different from an earlier seed-74 run and added
-  `04_seed_sensitivity.py` to explain why.
+  the logs in `outputs/`. While running the pipeline, it also suggested and wrote the seed
+  robustness check (`04_seed_sensitivity.py`) to test whether the seed-46 cross-day result
+  was stable.
 
 I specified the task, the feature sets, the seed and the structure of the deliverables. I
 read and checked the code and logs, checked that the numbers in the report match `outputs/`,

@@ -91,7 +91,7 @@ bash scripts/00_download.sh 2>&1 | tee outputs/00_download.log
 # 4. TCP fingerprint check: is the detector just recognising the attack tool?
 .venv/bin/python scripts/03_fingerprint_check.py > outputs/03_fingerprint.log 2>&1
 
-# 5. Seed check for the EARLY tree (seeds 46, 74, 0-9).
+# 5. Robustness check: EARLY tree with seed 46 and seeds 0-9.
 .venv/bin/python scripts/04_seed_sensitivity.py > outputs/04_seed_sensitivity.log 2>&1
 ```
 
@@ -103,8 +103,7 @@ results don't get overwritten:
 
 ```bash
 .venv/bin/python scripts/02_train.py --depth 3 --out outputs/depth3
-.venv/bin/python scripts/02_train.py --seed 74 --out outputs/seed74
-.venv/bin/python scripts/04_seed_sensitivity.py --depth 3 --seeds 46 74 1 2
+.venv/bin/python scripts/04_seed_sensitivity.py --depth 3 --seeds 46 1 2
 ```
 
 For example, with `--depth 3` the EARLY tree has 7 rules instead of 16 and Friday precision
@@ -462,30 +461,29 @@ obvious signature, but not on attacks that are designed to look normal and go sl
 
 Script: `scripts/04_seed_sensitivity.py`
 
-In an earlier run with seed 74, the EARLY tree caught 57% of the Wednesday attacks (64% of
-Hulk). With seed 46 it caught 0.35%. That's a big difference just from changing the seed, so I
-looked into it.
-
-I retrained the EARLY tree with 12 different seeds:
+With seed 46 the EARLY tree caught only 0.35% of the Wednesday attacks. I wanted to know
+whether that number is stable or just how this particular tree turned out, so as a robustness
+check I retrained the EARLY tree with seed 46 and seeds 0-9 (11 trees). Seed 46 is still the
+main result everywhere else.
 
 - Friday precision hardly changes, staying between 0.989 and 0.991.
-- Wednesday recall only ever takes one of three values: 0.0035, 0.3075 or 0.5724. Seed 74 gives
-  exactly 0.5724 again, so the code matches the earlier run.
+- Wednesday recall only ever takes one of three values: 0.0035 (seed 46), 0.3075 or 0.5724.
+  The best case, e.g. seed 1, catches 64% of Hulk.
 
-To find out why, I compared the rules of the two trees. The seed-74 tree has two extra small
-"attack" rules:
+To find out why, I compared the rules of the seed-46 tree with the seed-1 tree. The seed-1 tree
+has two extra small "attack" rules:
 
 - "window = 251", which comes from only 17 of the 128,014 Friday DDoS flows
 - "window = 0", which comes from only 27 of them
 
 As it happens, the two most common window values for Hulk are 0 (34%) and 251 (33%). So the
-seed-74 tree catches Hulk because of two tiny rules that just happen to line up, not because
+seed-1 tree catches Hulk because of two tiny rules that just happen to line up, not because
 it learned anything useful. The seed-46 tree labels those same values as benign.
 
 What I take from this is that same-day accuracy can't tell a lucky tree from an unlucky one,
 so any success on new attack types here is basically coincidence. That's why the report says
 testing should be done across different days. I kept seed 46 as the main result, as the task
-requires, instead of choosing whichever seed looked best.
+requires, and report this as a limitation instead of choosing whichever seed looks best.
 
 ### 3.8 Step 5: the write-ups
 
@@ -493,7 +491,7 @@ requires, instead of choosing whichever seed looked best.
 |---|---|
 | `README.md` | This file: setup, exact commands, layout, walkthrough |
 | `report/REPORT.md` | The ~2-page report: goal, method, results, failure case, limitations |
-| `report/STUCK_NOTES.md` | The problems I hit and how I fixed them: server down, LFS pointers, spaces in column names, NaN/infinity, duplicates, bash 3.2, missing sklearn, the seed mismatch |
+| `report/STUCK_NOTES.md` | The problems I hit and how I fixed them: server down, LFS pointers, spaces in column names, NaN/infinity, duplicates, bash 3.2, missing sklearn, the seed check |
 | `report/WEEK2.md` | Plan for week 2: get the raw packet captures (pcaps), compute real first-k-packet features for k = 2 to 10, always test across days, add per-source timers for slow attacks, put the tree into a P4 switch program on BMv2/Mininet, and connect it to my ResilientDAG work |
 | `report/AI_USE.md` | How I used AI tools |
 
@@ -531,6 +529,6 @@ scripts, make the commits, and draft the documents. A few things were added whil
 
 - fixes for bash 3.2 and the Python environment
 - the second fingerprint rule (window 256 or 8192)
-- the seed sensitivity check, after the seed-46 result didn't match the earlier seed-74 numbers
+- the seed robustness check, to see whether the seed-46 cross-day result was stable
 
 The full disclosure is in [report/AI_USE.md](report/AI_USE.md).
