@@ -62,8 +62,18 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-All commands are run from the repo root. This is exactly what I ran to get the files in
-`outputs/`, in this order:
+To run the whole pipeline in one go (about a minute once the CSVs are downloaded):
+
+```bash
+bash run_all.sh
+```
+
+It runs the five steps below in order, shows the output live and saves each log in `outputs/`.
+Since everything uses seed 46, a rerun should reproduce the committed outputs exactly, and
+`git status outputs/` should show no changes afterwards.
+
+To run the steps one at a time instead: all commands are run from the repo root, and this is
+exactly what I ran to get the files in `outputs/`, in this order:
 
 ```bash
 # 1. Download the two CSVs (~74 MB + ~215 MB) into data/, write and verify data/SHA256SUMS.
@@ -109,6 +119,7 @@ goes down from 0.9896 to 0.9743. So a smaller switch table costs you more false 
 ## 2. Repo layout
 
 ```
+run_all.sh                  runs all the steps below in order and saves the logs
 scripts/
   00_download.sh            downloads the two CSVs and checks SHA-256 (GitHub LFS mirror)
   common.py                 shared paths, CSV loader (strips spaces in column names), clean()
